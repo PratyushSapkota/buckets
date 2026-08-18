@@ -9,8 +9,6 @@
 | `currency`   | `text`        | NOT NULL    | Currency used by the bucket |
 | `color`      | `text`        | NULL        | Display color               |
 | `closed_at`  | `timestamptz` | NULL        | When the bucket was closed  |
-| `created_at` | `timestamptz` | NOT NULL    | Creation time               |
-| `updated_at` | `timestamptz` | NOT NULL    | Last modification time      |
 
 
 ---
@@ -25,8 +23,6 @@
 | `bucket_id`  | `uuid`        | FK → `buckets.id`, NOT NULL | Bucket containing the account |
 | `name`       | `text`        | NOT NULL                    | Display name                  |
 | `closed_at`  | `timestamptz` | NULL                        | When the account was closed   |
-| `created_at` | `timestamptz` | NOT NULL                    | Creation time                 |
-| `updated_at` | `timestamptz` | NOT NULL                    | Last modification time        |
 
 ---
 
@@ -39,8 +35,6 @@
 | `user_id`    | `uuid`        | NOT NULL    | Owner of the category  |
 | `name`       | `text`        | NOT NULL    | Category name          |
 | `color`      | `text`        | NULL        | Display color          |
-| `created_at` | `timestamptz` | NOT NULL    | Creation time          |
-| `updated_at` | `timestamptz` | NOT NULL    | Last modification time |
 
 ---
 
