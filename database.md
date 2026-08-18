@@ -1,6 +1,5 @@
 # `buckets`
 
-
 | Column       | Type          | Constraints | Description                 |
 | ------------ | ------------- | ----------- | --------------------------- |
 | `id`         | `uuid`        | Primary Key | Bucket identifier           |
@@ -13,7 +12,6 @@
 | `created_at` | `timestamptz` | NOT NULL    | Creation time               |
 | `updated_at` | `timestamptz` | NOT NULL    | Last modification time      |
 
-A bucket is open when `closed_at` is `NULL`.
 
 ---
 
@@ -29,9 +27,6 @@ A bucket is open when `closed_at` is `NULL`.
 | `closed_at`  | `timestamptz` | NULL                        | When the account was closed   |
 | `created_at` | `timestamptz` | NOT NULL                    | Creation time                 |
 | `updated_at` | `timestamptz` | NOT NULL                    | Last modification time        |
-
-An account is open when `closed_at` is `NULL`.
-
 
 ---
 
@@ -51,46 +46,43 @@ An account is open when `closed_at` is `NULL`.
 
 # `transactions`
 
-| Column        | Type          | Constraints | Description                                      |
-| ------------- | ------------- | ----------- | ------------------------------------------------ |
-| `id`          | `uuid`        | Primary Key | Transaction identifier                           |
-| `user_id`     | `uuid`        | NOT NULL    | Owner of the transaction                         |
-| `type`        | `text`        | NOT NULL    | `income`, `expense`, `transfer`, or `adjustment` |
-| `description` | `text`        | NULL        | Optional description                             |
-| `occurred_at` | `timestamptz` | NOT NULL    | When the financial event occurred                |
-| `created_at`  | `timestamptz` | NOT NULL    | Creation time                                    |
-| `updated_at`  | `timestamptz` | NOT NULL    | Last modification time                           |
+| Column                | Type                                | Constraints                  | Description                                      |
+| --------------------- | ----------------------------------- | ---------------------------- | ------------------------------------------------ |
+| `id`                  | `uuid`                              | Primary Key                  | Transaction identifier                           |
+| `description`         | `text`                              | NULL                         | Optional description                             |
+| `amount`              | `integer`                           | NOT NULL, greater than `0`   | Amount in minor currency units                   |
+| `type`                | `enum(credit, debit, transfer)`     | NOT NULL                     | How the transaction affects the account          |
+| `category_id`         | `uuid`                              | FK → `categories.id`, NULL   | Optional category; normally `NULL` for transfers |
+| `account_id`          | `uuid`                              | FK → `accounts.id`, NOT NULL | Account credited, debited, or transferred from   |
+| `transfer_account_id` | `uuid`                              | FK → `accounts.id`, NULL     | Destination account for a transfer               |
+| `occurred_at`         | `timestamptz`                       | NULL                         | When the financial event occurred                |
 
 
----
-
-# `transaction_entries`
-
-| Column           | Type     | Constraints                      | Description                           |
-| ---------------- | -------- | -------------------------------- | ------------------------------------- |
-| `id`             | `uuid`   | Primary Key                      | Entry identifier                      |
-| `transaction_id` | `uuid`   | FK → `transactions.id`, NOT NULL | Parent transaction                    |
-| `account_id`     | `uuid`   | FK → `accounts.id`, NOT NULL     | Account whose balance is affected     |
-| `category_id`    | `uuid`   | FK → `categories.id`, NULL       | Optional transaction category         |
-| `amount`         | `bigint` | NOT NULL                         | Signed amount in minor currency units |
+`transfer_account_id` must be present only for transfers and must differ from
+`account_id`.
 
 ---
 
 ## Relationships
     bucket
       └── accounts
-            └── transaction_entries
-                  ├── transaction
-                  └── category
+            ├── transactions
+            └── incoming transfers
+
+    category
+      └── transactions
 
 A bucket can contain many accounts.
 
-An account can contain many transaction entries.
+An account can be referenced by many transactions through `account_id`.
 
-A transaction can contain one or more transaction entries.
+An account can receive many transfers through `transfer_account_id`.
 
-A category can be referenced by many transaction entries.
+A category can be referenced by many transactions.
 
 All relationships must remain within the same owner.
+
+Account balances are derived from transactions:
+    credits - debits - outgoing transfers + incoming transfers
 
 ---
