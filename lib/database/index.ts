@@ -1,19 +1,28 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { getUser } from "@/lib/auth/";
+import { Unauthorized } from "./errors";
+import { DbContext } from "./types";
+import { drizzleClient } from "./client";
+import { createAccountsActions } from "./objects/accounts";
+import { createBucketsActions } from "./objects/buckets";
+import { createCategoriesActions } from "./objects/categories";
+import { createTransactionsActions } from "./objects/transactions";
 
-const connectionString = process.env.DATABASE_URL;
+export async function getDb() {
+  const user = await getUser();
 
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not configured");
+  if (!user) {
+    throw new Unauthorized();
+  }
+
+  const context: DbContext = {
+    userId: user.id,
+    drizzleClient: drizzleClient,
+  };
+
+  return {
+    accounts: createAccountsActions(context),
+    buckets: createBucketsActions(context),
+    categories: createCategoriesActions(context),
+    transactions: createTransactionsActions(context),
+  };
 }
-
-// Disable prepared statements because Supabase transaction poolers do not support them.
-const client = postgres(connectionString, { prepare: false });
-
-export const db = drizzle(client);
-
-export * from "./accounts";
-export * from "./buckets";
-export * from "./categories";
-export * from "./transactions";
-export * from "./types";

@@ -1,7 +1,4 @@
-"use client";
-
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 export async function signInWithEmailAndPassword(
   email: string,
