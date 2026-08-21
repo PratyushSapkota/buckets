@@ -8,6 +8,13 @@
       "when": 1787157703866,
       "tag": "0000_right_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787318446957,
+      "tag": "0001_lowly_inertia",
+      "breakpoints": true
     }
   ]
 }

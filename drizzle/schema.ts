@@ -23,7 +23,6 @@ export const buckets = pgTable(
     id: uuid("id").primaryKey(),
     userId: uuid("user_id").notNull(),
     name: text("name").notNull(),
-    type: text("type").notNull(),
     currency: text("currency").notNull(),
     color: text("color"),
     closedAt: timestamp("closed_at", { withTimezone: true }),
