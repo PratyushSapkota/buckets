@@ -20,7 +20,7 @@ export const transactionType = pgEnum("transaction_type", [
 export const buckets = pgTable(
   "buckets",
   {
-    id: uuid("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").notNull(),
     name: text("name").notNull(),
     currency: text("currency").notNull(),
@@ -33,7 +33,7 @@ export const buckets = pgTable(
 export const accounts = pgTable(
   "accounts",
   {
-    id: uuid("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").notNull(),
     bucketId: uuid("bucket_id").notNull(),
     name: text("name").notNull(),
@@ -52,18 +52,20 @@ export const accounts = pgTable(
 export const categories = pgTable(
   "categories",
   {
-    id: uuid("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").notNull(),
     name: text("name").notNull(),
     color: text("color"),
   },
-  (table) => [unique("categories_id_user_id_unique").on(table.id, table.userId)],
+  (table) => [
+    unique("categories_id_user_id_unique").on(table.id, table.userId),
+  ],
 );
 
 export const transactions = pgTable(
   "transactions",
   {
-    id: uuid("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     userId: uuid("user_id").notNull(),
     description: text("description"),
     amount: integer("amount").notNull(),
