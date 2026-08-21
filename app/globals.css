@@ -128,3 +128,31 @@
     @apply font-sans;
   }
 }
+
+[data-slot="toast-viewport"][data-position="top-center"] {
+  top: 1rem;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  margin-inline: auto;
+  width: min(calc(100% - 2rem), 24rem);
+}
+
+[data-slot="toast"][data-position="top-center"] {
+  top: 0;
+  bottom: auto;
+  transform: translateX(var(--toast-swipe-movement-x))
+    translateY(
+      calc(
+        var(--toast-swipe-movement-y) +
+          (var(--toast-index) * var(--peek)) +
+          (var(--shrink) * var(--height))
+      )
+    )
+    scale(var(--scale));
+}
+
+[data-slot="toast"][data-position="top-center"][data-expanded] {
+  transform: translateX(var(--toast-swipe-movement-x))
+    translateY(var(--toast-offset-y)) scale(var(--scale));
+}

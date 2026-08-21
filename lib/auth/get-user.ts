@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
 
 export async function getUser() {
   const supabase = await createSupabaseServerClient();
@@ -7,6 +8,9 @@ export async function getUser() {
     error,
   } = await supabase.auth.getUser();
 
-  if (error) throw error;
+  if (error) {
+    if (isAuthSessionMissingError(error)) return null;
+    throw error;
+  }
   return user;
 }
