@@ -1,5 +1,5 @@
 import { getBucketNames, getBuckets } from "@/feature/buckets/queries";
-import { AccountControl } from "./desktop/AccountControl";
+import { AccountControl } from "./AccountControl";
 import { BucketCard } from "@/feature/buckets/components/BucketCard";
 import { CreateBucket } from "@/feature/buckets/components/CreateBucket";
 

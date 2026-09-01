@@ -16,6 +16,7 @@ import { HexColorPicker } from "react-colorful";
 import { createBucket } from "../actions";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function CreateBucket() {
   const [bucketName, setBucketName] = useState("");
@@ -48,7 +49,7 @@ export function CreateBucket() {
     <Drawer
       open={drawerOpen}
       onOpenChange={setDrawerOpen}
-      swipeDirection={"right"}
+      swipeDirection={ useIsMobile() ? "down" : "right" }
     >
       <DrawerTrigger render={<Button>Create new</Button>} />
       <DrawerContent>

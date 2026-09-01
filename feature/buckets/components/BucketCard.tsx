@@ -8,13 +8,22 @@ export async function BucketCard({ bucket }: { bucket: Bucket }) {
   const accounts = await getAccounts(bucket.id);
   return (
     <div>
-      <span>{bucket.name}</span>
+      <span style={{ color: bucket.color ? bucket.color : "" }}>
+        {bucket.name}
+      </span>
       <CreateAccount
         bucketSelect={
           <SelectBucket formItemName="bucketId" selected={bucket.id} />
         }
       />
-      <div>{accounts.map((account) => account.name)}</div>
+      <div>
+        {accounts.map((account) => (
+          <span key={account.id}>
+            {"\t"}
+            {account.name}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

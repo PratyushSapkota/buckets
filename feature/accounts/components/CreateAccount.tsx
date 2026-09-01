@@ -15,6 +15,7 @@ import { toast } from "@/components/ui/toast";
 import { PlusIcon } from "lucide-react";
 import React, { useState } from "react";
 import { createAccount } from "../actions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function CreateAccount({
   bucketSelect,
@@ -50,7 +51,7 @@ export function CreateAccount({
   }
   return (
     <Drawer
-      swipeDirection="right"
+      swipeDirection={useIsMobile() ? "down" : "right"}
       open={drawerOpen}
       onOpenChange={setDrawerOpen}
     >
