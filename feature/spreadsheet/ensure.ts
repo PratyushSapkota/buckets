@@ -2,14 +2,12 @@ import "server-only";
 import { findSpreadsheet } from "./find";
 import { createSpreadsheet } from "./create";
 
+export async function ensureSpreadsheet(googleUserId: string): Promise<string> {
+  const existingSpreadsheetId = await findSpreadsheet(googleUserId);
 
-export async function ensureSpreadsheet(googleUserId: string) {
-    const existingSpreadsheetId = await findSpreadsheet(googleUserId)
-    
-    if (existingSpreadsheetId) {
-        return existingSpreadsheetId
-    }
+  if (existingSpreadsheetId) {
+    return existingSpreadsheetId;
+  }
 
-    return await createSpreadsheet(googleUserId);
-    
+  return await createSpreadsheet(googleUserId);
 }
