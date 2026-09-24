@@ -9,5 +9,5 @@ export async function ensureSpreadsheet(googleUserId: string): Promise<string> {
     return existingSpreadsheetId;
   }
 
-  return await createSpreadsheet(googleUserId);
+  return createSpreadsheet(googleUserId);
 }

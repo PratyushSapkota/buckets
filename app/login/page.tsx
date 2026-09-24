@@ -1,5 +1,4 @@
 import { getCurrentUserId } from "@/lib/session";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function Login() {
