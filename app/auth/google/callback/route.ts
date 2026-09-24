@@ -71,15 +71,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (!token.refresh_token) {
+  const redis = await getRedis();
+
+  const userKey = `user:${identity.googleUserId}`;
+  const existingRefreshToken = await redis.get(userKey);
+
+  if (token.refresh_token) {
+    await redis.set(userKey, token.refresh_token);
+  } else if (!existingRefreshToken) {
     return NextResponse.json(
       { error: "Missing refresh token" },
       { status: 400 },
     );
   }
-
-  const redis = await getRedis();
-  await redis.set(`user:${identity.googleUserId}`, token.refresh_token);
 
   const sessionId = crypto.randomUUID();
   await redis.set(`session:${sessionId}`, identity.googleUserId, {

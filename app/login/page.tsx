@@ -3,15 +3,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function Login() {
-  const sessionId = await getCurrentUserId();
+  const userId = await getCurrentUserId();
 
-  if (sessionId) {
+  if (userId) {
     redirect("/");
   }
 
   return (
     <main>
-      <Link href={"/auth/google"}>Login with google</Link>
+      <a href={"/auth/google"}>Login with google</a>
     </main>
   );
 }
