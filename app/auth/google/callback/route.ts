@@ -1,5 +1,38 @@
 import axios from "axios";
+import { OAuth2Client } from "google-auth-library";
 import { NextRequest, NextResponse } from "next/server";
+
+type Identity = { email: string; name: string; googleUserId: string };
+
+function whitelisted(identity: Identity) {
+  const allowedEmails =
+    process.env.GOOGLE_OAUTH_ALLOWED_EMAILS?.split(",").map((email) =>
+      email.trim().toLowerCase(),
+    ) ?? [];
+
+  return allowedEmails.includes(identity.email.toLowerCase());
+}
+
+async function getIdentity(id_token: string): Promise<Identity | null> {
+  const googleClient = new OAuth2Client(process.env.GOOGLE_OAUTH_CLIENT_ID);
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: id_token,
+    audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload || !payload.email || !payload.name) {
+    return null;
+  }
+
+  return {
+    email: payload.email,
+    name: payload.name,
+    googleUserId: payload.sub,
+  };
+}
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -24,9 +57,18 @@ export async function GET(request: NextRequest) {
     },
   );
 
-  return NextResponse.json({
-    hasAccessToken: !!token.access_token,
-    hasRefreshToken: !!token.refresh_token,
-    rawToken: token
-  });
+  const identity = await getIdentity(token.id_token);
+
+  if (!identity) {
+    return NextResponse.json(
+      { error: "Could not get Google identity" },
+      { status: 400 },
+    );
+  }
+
+  if (!(whitelisted(identity))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return NextResponse.json(identity);
 }
