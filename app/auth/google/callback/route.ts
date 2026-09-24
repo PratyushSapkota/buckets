@@ -1,3 +1,4 @@
+import { getRedis } from "@/lib/redis";
 import axios from "axios";
 import { OAuth2Client } from "google-auth-library";
 import { NextRequest, NextResponse } from "next/server";
@@ -66,9 +67,34 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!(whitelisted(identity))) {
+  if (!whitelisted(identity)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return NextResponse.json(identity);
+  if (!token.refresh_token) {
+    return NextResponse.json(
+      { error: "Missing refresh token" },
+      { status: 400 },
+    );
+  }
+
+  const redis = await getRedis();
+  await redis.set(`user:${identity.googleUserId}`, token.refresh_token);
+
+  const sessionId = crypto.randomUUID();
+  await redis.set(`session:${sessionId}`, identity.googleUserId, {
+    expiration: { type: "EX", value: 60 * 60 * 24 * 30 },
+  });
+
+  const response = NextResponse.redirect(new URL("/", request.url));
+
+  response.cookies.set("session", sessionId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+
+  return response;
 }

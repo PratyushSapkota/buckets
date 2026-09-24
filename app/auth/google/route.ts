@@ -12,6 +12,7 @@ export async function GET() {
       "https://www.googleapis.com/auth/spreadsheets",
       "https://www.googleapis.com/auth/drive.file",
     ].join(" "),
+    prompt: "consent",
     access_type: "offline",
   });
   return NextResponse.redirect(
