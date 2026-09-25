@@ -1,11 +1,7 @@
-import { initializeSpreadsheet } from "@/feature/spreadsheet";
-
 type Props = {
-  userId: string;
+  spreadsheetId: string;
 };
 
-export default async function SpreadsheetStatus({ userId }: Props) {
-  const spreadsheetId = await initializeSpreadsheet(userId);
-
-  return <div>{spreadsheetId ?? "No sheet found"}</div>;
+export default function SpreadsheetStatus({ spreadsheetId }: Props) {
+  return <div>{spreadsheetId}</div>;
 }
