@@ -1,48 +1,10 @@
-import ServiceUnavailable from "@/components/ServiceUnavailable";
-import SpreadsheetStatus from "@/components/sheet/Status";
-import { initializeSpreadsheet } from "@/feature/spreadsheet";
-import { isRedisUnavailableError } from "@/lib/redis";
-import { getCurrentUserId } from "@/lib/session";
-import { redirect } from "next/navigation";
+import Home from "@/components/Home";
+import { isRedisAvailable } from "@/lib/redis";
 
-export default async function Home() {
-  let userId: string | null;
-
-  try {
-    userId = await getCurrentUserId();
-  } catch (error) {
-    if (isRedisUnavailableError(error)) {
-      return <ServiceUnavailable service="Sign-in" />;
-    }
-
-    throw error;
+export default async function Page() {
+  if (!(await isRedisAvailable())) {
+    return <main>Service unavailable right now</main>;
+  } else {
+    return <Home />;
   }
-
-  if (!userId) {
-    redirect("/login");
-  }
-
-  let spreadsheetId: string;
-
-  try {
-    spreadsheetId = await initializeSpreadsheet(userId);
-  } catch (error) {
-    if (isRedisUnavailableError(error)) {
-      return <ServiceUnavailable service="Your account data" />;
-    }
-
-    throw error;
-  }
-
-  return (
-    <main>
-      <h1>Home</h1>
-
-      <SpreadsheetStatus spreadsheetId={spreadsheetId} />
-
-      <form action={"/auth/logout"} method="post">
-        <button type="submit">Logout</button>
-      </form>
-    </main>
-  );
 }

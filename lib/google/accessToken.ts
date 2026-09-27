@@ -1,19 +1,17 @@
 import "server-only";
-import { withRedis } from "../redis";
 import axios from "axios";
+import { getRedis } from "../redis";
 
 export async function getGoogleAccessToken(googleUserId: string) {
-  const cachedAccessToken = await withRedis((redis) =>
-    redis.get(`access:${googleUserId}`),
-  );
+  const redis = await getRedis();
+
+  const cachedAccessToken = await redis.get(`access:${googleUserId}`);
 
   if (cachedAccessToken) {
     return cachedAccessToken;
   }
 
-  const refreshToken = await withRedis((redis) =>
-    redis.get(`user:${googleUserId}`),
-  );
+  const refreshToken = await redis.get(`user:${googleUserId}`);
 
   if (!refreshToken) {
     throw new Error("Google refresh token not found");
@@ -40,14 +38,12 @@ export async function getGoogleAccessToken(googleUserId: string) {
 
   const expiresIn = data.expires_in ?? 3600;
 
-  await withRedis((redis) =>
-    redis.set(`access:${googleUserId}`, data.access_token, {
-      expiration: {
-        type: "EX",
-        value: Math.max(expiresIn - 60, 60),
-      },
-    }),
-  );
+  redis.set(`access:${googleUserId}`, data.access_token, {
+    expiration: {
+      type: "EX",
+      value: Math.max(expiresIn - 60, 60),
+    },
+  });
 
   return data.access_token;
 }

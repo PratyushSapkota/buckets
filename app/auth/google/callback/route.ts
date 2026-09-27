@@ -1,4 +1,4 @@
-import { isRedisUnavailableError, withRedis } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 import axios from "axios";
 import { OAuth2Client } from "google-auth-library";
 import { NextRequest, NextResponse } from "next/server";
@@ -73,36 +73,22 @@ export async function GET(request: NextRequest) {
 
   const userKey = `user:${identity.googleUserId}`;
   const sessionId = crypto.randomUUID();
+  const redis = await getRedis();
 
-  try {
-    const existingRefreshToken = await withRedis((redis) =>
-      redis.get(userKey),
+  const existingRefreshToken = await redis.get(userKey);
+
+  if (token.refresh_token) {
+    await redis.set(userKey, token.refresh_token);
+  } else if (!existingRefreshToken) {
+    return NextResponse.json(
+      { error: "Missing refresh token" },
+      { status: 400 },
     );
-
-    if (token.refresh_token) {
-      await withRedis((redis) => redis.set(userKey, token.refresh_token));
-    } else if (!existingRefreshToken) {
-      return NextResponse.json(
-        { error: "Missing refresh token" },
-        { status: 400 },
-      );
-    }
-
-    await withRedis((redis) =>
-      redis.set(`session:${sessionId}`, identity.googleUserId, {
-        expiration: { type: "EX", value: 60 * 60 * 24 * 30 },
-      }),
-    );
-  } catch (error) {
-    if (isRedisUnavailableError(error)) {
-      return NextResponse.json(
-        { error: "Sign-in is temporarily unavailable" },
-        { status: 503, headers: { "Retry-After": "5" } },
-      );
-    }
-
-    throw error;
   }
+
+  await redis.set(`session:${sessionId}`, identity.googleUserId, {
+    expiration: { type: "EX", value: 60 * 60 * 24 * 30 },
+  });
 
   const response = NextResponse.redirect(new URL("/", request.url));
 
