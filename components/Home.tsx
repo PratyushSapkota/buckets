@@ -1,3 +1,4 @@
+import { CreateBucket } from "@/feature/buckets/components/CreateBucket";
 import { getCurrentUserId } from "@/lib/session";
 import { redirect } from "next/navigation";
 
@@ -10,7 +11,9 @@ export default async function Home() {
   return (
     <main>
       <h1>Home</h1>
-      <div></div>
+      <div>
+        <CreateBucket />
+      </div>
       <form action={"/auth/logout"} method="post">
         <button type="submit">Logout</button>
       </form>
