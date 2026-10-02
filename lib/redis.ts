@@ -35,6 +35,6 @@ export async function isRedisAvailable() {
   }
 }
 
-// redis.on("error", (error) => {
-//   console.error("Redis error:", error);
-// });
+redis.on("error", (error) => {
+  console.error("Redis error:", error);
+});

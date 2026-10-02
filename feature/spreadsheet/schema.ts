@@ -5,14 +5,14 @@ export const WORKSHEET_NAME = "data";
 export const SHEET_SCHEMA = {
   buckets: {
     startColumnIndex: 0,
-    endColumnIndex: 2,
-    columns: ["id", "name"],
+    endColumnIndex: 3,
+    columns: ["id", "name", "archived"],
   },
 
   accounts: {
     startColumnIndex: 3,
-    endColumnIndex: 6,
-    columns: ["id", "name", "bucketId"],
+    endColumnIndex: 7,
+    columns: ["id", "name", "bucketId", "archived"],
   },
 
   categories: {
@@ -22,8 +22,8 @@ export const SHEET_SCHEMA = {
   },
 
   transactions: {
-    startColumnIndex: 10,
-    endColumnIndex: 16,
+    startColumnIndex: 9,
+    endColumnIndex: 15,
     columns: ["id", "date", "amount", "accountId", "categoryId", "description"],
   },
 } as const;
