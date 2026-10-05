@@ -25,6 +25,6 @@ Application pages and layout are server components. Imported Mantine components 
 ## Login
 
 - **Role/input:** Server page at [`/login`](routes.md#login), accepting asynchronous search parameters with an optional `error`.
-- **Behavior:** Valid sessions redirect home. Otherwise renders a default Mantine Continue with Google button linking to OAuth initiation. Only recognized error codes produce brief Text messages; query text is never echoed. No branding panel, explanatory copy, or custom styling.
+- **Behavior:** Valid sessions redirect home. Otherwise renders a default Mantine Continue with Google button linking to OAuth initiation. Only recognized error codes produce brief Text messages, including worksheet setup failures; query text is never echoed. No branding panel, explanatory copy, or custom styling.
 - **Dependencies:** Mantine Button/Text, `next/navigation`, [currentSession](authentication.md#services), RootLayout.
 - **Metadata:** Sign in | Buckets.

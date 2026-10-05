@@ -8,7 +8,9 @@ Redis stores `oauth:<state> → nonce` for ten minutes and `session:<random-id> 
 
 Cookies are HttpOnly, SameSite=Lax, Path=/, Secure in production, and expire with their corresponding Redis records. Google tokens are discarded after verification. A successful login invalidates a prior session from the browser before establishing a new one.
 
-Home and login validate sessions in server components. Storage failures do not bypass authentication. Logout is a same-origin POST; deletion failure retains cookies and offers retry. No middleware, Sheets provisioning, IndexedDB, or client-side cleanup exists in this step.
+After identity and whitelist verification, the callback resolves the user's worksheet through [spreadsheet services](spreadsheet.md) before invalidating an old session or creating a new one. Newly created worksheets include entity headers, the account-balance formula, and the account/category pivot. Sheets or worksheet-cache failures prevent login completion. Worksheet mappings are independent of sessions and survive logout.
+
+Home and login validate sessions in server components. Storage failures do not bypass authentication. Logout is a same-origin POST; deletion failure retains cookies and offers retry. No middleware, entity writes, IndexedDB, or client-side cleanup exists in this step. Existing sessions are not retroactively provisioned; worksheet resolution runs on the next successful Google login.
 
 ## Configuration
 
@@ -21,6 +23,8 @@ Server-only environment variables:
 | `GOOGLE_OAUTH_CALLBACK_URL` | Absolute URL ending exactly in /auth/google/callback; must match Google Console registration |
 | `GOOGLE_OAUTH_ALLOWED_EMAILS` | Comma-separated approved verified emails; whitespace trimmed and comparison lowercased; empty denies login |
 | `REDIS_URL` | Existing Redis connection using redis:// or rediss:// |
+
+Login completion also requires `SERVICE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`, and `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`; see [spreadsheet configuration](spreadsheet.md#configuration).
 
 Copy [the example](../.env.example) into local server configuration and provide your own values. Production callback URLs require HTTPS; development HTTP callbacks are accepted only on loopback hosts. Redis must support GETDEL (Redis 6.2+). No Redis server is provisioned by the app. Behind a reverse proxy, preserve the public request origin so logout Origin validation succeeds.
 
@@ -38,6 +42,6 @@ These modules are server-only; there are no server actions. Their inputs must ne
 
 ## Errors and verification
 
-Login supports fixed messages for configuration, denied, failed, state, cancelled, and unavailable codes. Upstream errors, secrets, tokens, and arbitrary query strings are not rendered.
+Login supports fixed messages for configuration, denied, failed, state, cancelled, unavailable, and worksheet codes. Worksheet setup failures use a concise retry message; Redis failures use the existing unavailable message. Upstream errors, secrets, tokens, and arbitrary query strings are not rendered.
 
 Run `npm test`, `npm run lint`, `npx tsc --noEmit`, and `npm run build`. Vitest mocks Google and Redis boundaries to test handshake replay/expiry, identity rejection, whitelist checks, cookies, session lifetime, page redirects, outage behavior, and logout. Live verification additionally requires configured Google credentials, registered callback, an approved Google account, and reachable Redis; complete Google consent in a browser, refresh home, and sign out.

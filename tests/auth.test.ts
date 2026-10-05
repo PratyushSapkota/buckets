@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => {
     getDel: vi.fn(async (key: string) => { const value = await get(key); values.delete(key); return value; }),
     del: vi.fn(async (key: string) => Number(values.delete(key))),
   };
-  return { values, client, getToken: vi.fn(), verifyIdToken: vi.fn(), cookies: vi.fn() };
+  return { values, client, getToken: vi.fn(), verifyIdToken: vi.fn(), cookies: vi.fn(), ensureWorksheet: vi.fn() };
 });
 vi.mock("server-only", () => ({}));
 vi.mock("redis", () => ({ createClient: () => mocks.client }));
@@ -28,6 +28,7 @@ vi.mock("google-auth-library", () => ({
   OAuth2Client: class { getToken = mocks.getToken; verifyIdToken = mocks.verifyIdToken; },
 }));
 vi.mock("next/headers", () => ({ cookies: mocks.cookies }));
+vi.mock("@/spreadsheet/worksheet", () => ({ ensureWorksheet: mocks.ensureWorksheet }));
 vi.mock("next/navigation", () => ({ redirect: (path: string) => { throw new Error("REDIRECT:" + path); } }));
 
 import { GET as start } from "@/app/auth/google/route";
@@ -37,6 +38,7 @@ import Home from "@/app/page";
 import Login from "@/app/login/page";
 import { AuthError, authConfig, cookieOptions, SESSION_COOKIE, STATE_COOKIE, verifyIdentity } from "@/auth/service";
 import { createSession, readSession, SESSION_TTL, HANDSHAKE_TTL } from "@/redis/sessions";
+import { SpreadsheetError } from "@/spreadsheet/client";
 
 const origin = "http://localhost:3000";
 const identity = { sub: "google-sub", email: " APPROVED@example.com ", email_verified: true, nonce: "" };
@@ -62,6 +64,8 @@ beforeEach(() => {
   vi.stubEnv("GOOGLE_OAUTH_CALLBACK_URL", origin + "/auth/google/callback");
   vi.stubEnv("GOOGLE_OAUTH_ALLOWED_EMAILS", "approved@example.com");
   mocks.values.clear();
+  mocks.ensureWorksheet.mockReset();
+  mocks.ensureWorksheet.mockResolvedValue(0);
   mocks.client.set.mockClear();
   mocks.client.get.mockReset();
   mocks.client.get.mockImplementation(async (key: string) => {
@@ -98,6 +102,7 @@ describe("OAuth", () => {
     expect(response.headers.get("location")).toBe(origin + "/");
     expect(mocks.client.set).toHaveBeenCalledWith("session:" + id, "google-sub", { EX: SESSION_TTL });
     expect(mocks.verifyIdToken).toHaveBeenCalledWith({ idToken: "private-id-token", audience: "client-id" });
+    expect(mocks.ensureWorksheet).toHaveBeenCalledWith("google-sub");
     expect(response.cookies.get(STATE_COOKIE)?.value).toBe("");
     expect(response.headers.get("set-cookie")).toContain("Max-Age=2592000");
     expect(await response.text()).not.toContain("private");
@@ -132,6 +137,7 @@ describe("OAuth", () => {
     identity.email = "other@example.com";
     expect((await finish()).headers.get("location")).toBe(origin + "/login?error=denied");
     expect([...mocks.values.keys()].filter((key) => key.startsWith("session:"))).toHaveLength(0);
+    expect(mocks.ensureWorksheet).not.toHaveBeenCalled();
   });
   it.each(["nonce", "sub", "email_verified", "email"])("rejects invalid %s", async (claim) => {
     const flow = await handshake();
@@ -157,6 +163,25 @@ describe("OAuth", () => {
     const response = await callback(request("/auth/google/callback?code=code&state=" + flow.state, flow.cookie));
     expect(response.headers.get("location")).toBe(origin + "/login?error=unavailable");
     expect(response.cookies.get(SESSION_COOKIE)).toBeUndefined();
+  });
+  it("resolves the worksheet after verification and before session creation", async () => {
+    mocks.ensureWorksheet.mockImplementation(async () => {
+      expect(mocks.verifyIdToken).toHaveBeenCalledOnce();
+      expect([...mocks.values.keys()].filter((key) => key.startsWith("session:"))).toHaveLength(0);
+      return 42;
+    });
+    const response = await finish();
+    expect(response.cookies.get(SESSION_COOKIE)).toBeDefined();
+  });
+  it("keeps an existing session intact and issues no new session on worksheet failure", async () => {
+    const oldId = await createSession("existing-user");
+    const flow = await handshake();
+    mocks.ensureWorksheet.mockRejectedValue(new SpreadsheetError());
+    const response = await callback(request("/auth/google/callback?code=code&state=" + flow.state, flow.cookie + "; " + SESSION_COOKIE + "=" + oldId));
+    expect(response.headers.get("location")).toBe(origin + "/login?error=worksheet");
+    expect(response.cookies.get(SESSION_COOKIE)).toBeUndefined();
+    expect(await readSession(oldId)).toBe("existing-user");
+    expect(mocks.client.del).not.toHaveBeenCalled();
   });
 });
 

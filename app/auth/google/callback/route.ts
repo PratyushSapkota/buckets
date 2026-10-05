@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError, cookieOptions, SESSION_COOKIE, STATE_COOKIE, verifyIdentity } from "@/auth/service";
 import { loginError } from "@/auth/responses";
 import { consumeHandshake, createSession, deleteSession, SESSION_TTL } from "@/redis/sessions";
+import { ensureWorksheet } from "@/spreadsheet/worksheet";
 export async function GET(request: NextRequest) {
   try {
     const state = request.nextUrl.searchParams.get("state");
@@ -12,6 +13,7 @@ export async function GET(request: NextRequest) {
     const code = request.nextUrl.searchParams.get("code");
     if (!code) throw new AuthError("failed");
     const sub = await verifyIdentity(code, nonce);
+    await ensureWorksheet(sub);
     await deleteSession(request.cookies.get(SESSION_COOKIE)?.value);
     const id = await createSession(sub);
     const response = NextResponse.redirect(new URL("/", request.url), 303);

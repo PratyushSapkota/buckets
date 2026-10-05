@@ -10,6 +10,7 @@ const messages: Record<string, string> = {
   state: "Sign-in expired or invalid. Try again.",
   cancelled: "Sign-in cancelled.",
   unavailable: "Authentication is temporarily unavailable.",
+  worksheet: "Worksheet setup failed. Try again.",
 };
 export default async function Login({
   searchParams,
