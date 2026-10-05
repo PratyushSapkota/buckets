@@ -1,29 +1,27 @@
+import { MODEL_SCHEMA } from "../models";
+
 export const SPREADSHEET_NAME = "buckets";
 
 export const WORKSHEET_NAME = "data";
 
-export const SHEET_SCHEMA = {
-  buckets: {
-    startColumnIndex: 0,
-    endColumnIndex: 3,
-    columns: ["id", "name", "archived"],
-  },
+let currentIndex = 0;
 
-  accounts: {
-    startColumnIndex: 3,
-    endColumnIndex: 7,
-    columns: ["id", "name", "bucketId", "archived"],
-  },
+export const SHEET_SCHEMA = Object.fromEntries(
+  Object.entries(MODEL_SCHEMA).map(([key, model]) => {
+    const columns = Object.keys(model);
 
-  categories: {
-    startColumnIndex: 7,
-    endColumnIndex: 9,
-    columns: ["id", "name"],
-  },
+    const startColumnIndex = currentIndex;
+    const endColumnIndex = currentIndex + columns.length;
 
-  transactions: {
-    startColumnIndex: 9,
-    endColumnIndex: 15,
-    columns: ["id", "date", "amount", "accountId", "categoryId", "description"],
-  },
-} as const;
+    currentIndex = endColumnIndex;
+
+    return [
+      key,
+      {
+        startColumnIndex,
+        endColumnIndex,
+        columns,
+      },
+    ];
+  }),
+);

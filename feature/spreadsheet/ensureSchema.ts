@@ -13,11 +13,14 @@ export async function ensureSpreadsheetSchema(
   const headers = {
     Authorization: `Bearer ${accessToken}`,
   };
-
-  const worksheetId = await getWorksheetId(spreadsheetId, headers);
-
-  await ensureNamedRanges(spreadsheetId, headers, worksheetId);
-  await ensureNamedColumnHeaders(spreadsheetId, WORKSHEET_NAME, headers);
+  try {
+    const worksheetId = await getWorksheetId(spreadsheetId, headers);
+    await ensureNamedRanges(spreadsheetId, headers, worksheetId);
+    await ensureNamedColumnHeaders(spreadsheetId, WORKSHEET_NAME, headers);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function getWorksheetId(

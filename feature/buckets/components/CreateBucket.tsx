@@ -1,5 +1,6 @@
 "use client";
 
+import { createBucketLocal } from "@/feature/local/buckets";
 import { useMobile } from "@/hooks/useMobile";
 import {
   Box,
@@ -11,18 +12,26 @@ import {
   Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { useState } from "react";
 
 export function CreateBucket() {
   const [drawerOpened, { open: drawerOpen, close: drawerClose }] =
     useDisclosure(false);
+
+  const [bucketName, setBucketName] = useState("");
 
   const [loading, { set: setLoading }] = useDisclosure(false);
 
   const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await createBucketLocal({
+      entity: "buckets",
+      operation: "create",
+      payload: { archived: false, id: crypto.randomUUID(), name: bucketName },
+    });
     drawerClose();
+    setBucketName("");
     setLoading(false);
   };
 
@@ -36,8 +45,8 @@ export function CreateBucket() {
         styles={{
           title: {
             fontSize: "24px",
-            fontWeight: 700
-          }
+            fontWeight: 700,
+          },
         }}
       >
         <Box>
@@ -45,7 +54,14 @@ export function CreateBucket() {
           <form onSubmit={handleSubmit}>
             <Stack>
               <Input.Wrapper label="Bucket name">
-                <Input type="text" />
+                <Input
+                  type="text"
+                  value={bucketName}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setBucketName(e.target.value);
+                  }}
+                />
               </Input.Wrapper>
               <Group justify="flex-end">
                 <Button type="submit">Submit</Button>
