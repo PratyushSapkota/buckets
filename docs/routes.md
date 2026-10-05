@@ -1,41 +1,46 @@
 # Routes
 
-This inventory describes implemented routes. Intended routes and flows are in [design.md](design.md#8-allowed-routes-and-home-components).
+This inventory describes implemented behavior. Authentication services and configuration are documented in [Authentication](authentication.md).
 
-| Path | Type / method | Implemented behavior | Source |
+| Path | Type / method | Behavior | Source |
 | --- | --- | --- | --- |
-| `/` | Page | Next.js starter page; not yet session-protected | [app/page.tsx](../app/page.tsx) |
-| `/auth/google` | Handler / GET | Starts Google OAuth; target path is `/google/auth` | [OAuth start](../app/auth/google/route.ts) |
-| `/auth/google/callback` | Handler / GET | Exchanges authorization code and returns token information; target path is `/google/auth/callback` | [OAuth callback](../app/auth/google/callback/route.ts) |
+| `/` | Page | Session-protected logout form | [Home](../app/page.tsx) |
+| `/login` | Page | Google sign-in and error messages | [Login](../app/login/page.tsx) |
+| `/auth/google` | Handler / GET | Starts Google OpenID Connect | [Start](../app/auth/google/route.ts) |
+| `/auth/google/callback` | Handler / GET | Verifies identity and creates session | [Callback](../app/auth/google/callback/route.ts) |
+| `/logout` | Handler / POST | Invalidates session | [Logout](../app/logout/route.ts) |
 
 ## Home
 
-- **Path/type:** `/`, page.
-- **Source/component:** [app/page.tsx](../app/page.tsx), [`Home`](components.md#home), wrapped by [`RootLayout`](components.md#rootlayout).
-- **Authentication:** None implemented.
-- **Inputs:** No page props or query processing.
-- **Output:** Static Next.js starter page with external resource links.
-- **Configuration:** No environment variables used by the page.
+- **Component:** [Home](components.md#home), wrapped by RootLayout.
+- **Authentication/input:** Reads the session cookie and Redis; no page props.
+- **Output/errors:** Default Mantine logout button; absent/invalid/expired session redirects to `/login`. Redis errors render a short error message and Retry button without bypassing authentication.
+- **Configuration:** `REDIS_URL`.
+
+## Login
+
+- **Component:** [Login](components.md#login), wrapped by RootLayout.
+- **Authentication/input:** Public page; reads session cookie and optional `error` query parameter.
+- **Output/errors:** Valid session redirects to `/`; otherwise a default Mantine sign-in button. Brief predefined messages for configuration, denied, failed, state, cancelled, and unavailable errors. Unknown query values are ignored.
+- **Configuration:** `REDIS_URL` for existing-session lookup.
 
 ## Google OAuth start
 
-- **Path/method:** `/auth/google`, GET handler.
-- **Source:** [app/auth/google/route.ts](../app/auth/google/route.ts).
-- **Purpose:** Redirects to Google's OAuth authorization endpoint.
-- **Authentication:** Public login initiation; no existing-session check.
-- **Inputs:** `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CALLBACK_URL` from server environment.
-- **Output:** Redirect requesting an authorization code, `access_type=offline`, and scopes `openid`, `email`, `profile`, Sheets, and `drive.file`.
-- **Behavior limits:** No state parameter, whitelist check, or session creation is implemented in this handler.
+- **Authentication:** Public GET login initiation.
+- **Inputs/configuration:** Google client ID, secret, callback URL, nonempty allowed-email list, and Redis URL; see [configuration](authentication.md#configuration).
+- **Behavior/output:** Stores random state and nonce in Redis for ten minutes, sets browser-bound HttpOnly state cookie, redirects to Google with `openid email profile` scopes. No Sheets/Drive permissions or offline access.
+- **Errors:** Configuration/storage failures redirect to login with a predefined error code; responses use no-store caching.
 
 ## Google OAuth callback
 
-- **Path/method:** `/auth/google/callback`, GET handler.
-- **Source:** [app/auth/google/callback/route.ts](../app/auth/google/callback/route.ts).
-- **Purpose:** Exchanges the authorization code for Google tokens using Axios.
-- **Authentication:** No application session or identity verification is implemented.
-- **Inputs:** `code` query parameter; `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_CALLBACK_URL`.
-- **Output:** JSON containing `hasAccessToken`, `hasRefreshToken`, and `rawToken`. No home redirect.
-- **Errors:** Missing code returns HTTP 400 with `Missing auth code`. Token-exchange errors have no explicit local handling.
-- **Behavior limits:** No callback state validation, ID-token verification, whitelist validation, Redis session, or worksheet initialization is implemented.
+- **Authentication:** Public GET callback that authenticates through the handshake and verified Google ID token.
+- **Inputs:** `state`, `code`, or provider `error`; browser state cookie, optional prior session cookie, and authentication configuration.
+- **Behavior/output:** Requires matching browser state; atomically consumes Redis handshake. Exchanges code, verifies ID token and nonce, requires verified approved email. Invalidates an existing browser session before creating a random 30-day Redis session storing only Google sub. Sets session cookie, clears state cookie, redirects home. Tokens are never returned or persisted.
+- **Errors:** Missing/mismatched/expired/replayed state, cancellation, missing code, exchange/verification failure, denied email, and storage/configuration failure redirect to login with predefined messages. No session cookie is issued on failure. All responses use no-store caching.
 
-No application server actions or standalone services are currently implemented. Their intended interfaces are in [design.md](design.md#9-server-interface-and-configuration).
+## Logout
+
+- **Authentication/input:** POST with Origin matching the request URL origin, and optional session cookie.
+- **Behavior/output:** Deletes Redis session and clears session/state cookies; 303 redirect to login. Missing/invalid session is harmless.
+- **Errors:** Missing/cross-origin Origin returns 403 JSON. Redis deletion failure returns 503 HTML with a retry form and home link, preserving cookies. GET is unsupported.
+- **Configuration:** `REDIS_URL`; production Secure cookies. Responses are not cached.

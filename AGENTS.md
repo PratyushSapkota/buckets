@@ -1,5 +1,11 @@
 # Repository documentation
 
+## UI constraints
+
+- Use Mantine components for UI controls.
+- Do not add decorative styling, custom themes, branding panels, explanatory copy, or even a basic designed layout unless the user explicitly requests it.
+- Render only the functional controls needed for the requested behavior and concise error messages.
+
 ## Finding context
 
 Start with [docs/README.md](docs/README.md). Use [docs/components.md](docs/components.md) to locate components and [docs/routes.md](docs/routes.md) to locate pages/handlers. Consult [docs/design.md](docs/design.md) only when its design context is relevant to the user's task. Read the relevant documentation and specific source files instead of scanning the entire repository each time.
