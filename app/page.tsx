@@ -2,9 +2,10 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import AuthButton from "@/app/components/auth-button";
 import { authOptions } from "@/lib/auth";
-import { FormTabs } from "./components/form/FormTabs";
+import { TransactionFormTabs } from "./components/form/TransactionFormTabs";
 import { ChangeQueue } from "./components/localChanges/ChangeQueue";
 import { LedgerProvider } from "./components/ledger/LedgerProvider";
+import { AccountForm } from "./components/form/AccountForm";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -19,10 +20,12 @@ export default async function Home() {
       <AuthButton action="signOut" />
 
       <LedgerProvider sourceData={null}>
-        <FormTabs />
+        <TransactionFormTabs />
+        <hr />
+        <AccountForm />
+        <hr />
         <ChangeQueue />
       </LedgerProvider>
-
     </main>
   );
 }

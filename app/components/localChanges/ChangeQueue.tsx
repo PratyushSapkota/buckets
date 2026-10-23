@@ -1,17 +1,17 @@
 "use client";
 
-import { Box, Button, Stack } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { Button, Stack } from "@mantine/core";
 import { useLedger } from "../ledger/LedgerProvider";
+import { QueueElement } from "./QueueElement";
 
 export function ChangeQueue() {
   const { localChanges, undoChange } = useLedger();
 
   return (
-    <Stack className="w-40">
-        <Button onClick={undoChange}>Undo Change</Button>
+    <Stack align="flex-end" w="fit-content" maw="100%" gap="xs">
+      <Button onClick={undoChange}>Undo Change</Button>
       {localChanges?.map((localChange) => (
-        <Box>{JSON.stringify(localChange)}</Box>
+        <QueueElement key={localChange.sequence} change={localChange} />
       ))}
     </Stack>
   );

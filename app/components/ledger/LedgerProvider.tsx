@@ -1,5 +1,5 @@
 "use client";
-import { getAllChanges, pushChange, popChange } from "@/lib/localDb";
+import { getAllChanges, pushChange, popChange, type StoredLocalChange } from "@/lib/localDb";
 import {
   createContext,
   ReactNode,
@@ -11,7 +11,7 @@ import {
 
 export type AddChange = (change: LocalChange) => Promise<number>;
 type LedgerContextValue = {
-  localChanges: LocalChange[] | null;
+  localChanges: StoredLocalChange[] | null;
   addChange: AddChange;
   undoChange: () => void;
   refresh: () => void;
@@ -27,7 +27,7 @@ export function LedgerProvider({
   children: ReactNode;
 }) {
   const [revision, setRevision] = useState(0);
-  const [localChanges, setLocalChanges] = useState<LocalChange[] | null>(null);
+  const [localChanges, setLocalChanges] = useState<StoredLocalChange[] | null>(null);
 
   useEffect(() => {
     let active = true;

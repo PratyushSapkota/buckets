@@ -19,7 +19,7 @@ type FormValues = {
   accountTo: string;
 };
 
-export function FormTabs() {
+export function TransactionFormTabs() {
   const { addChange } = useLedger();
 
   return (
@@ -51,6 +51,17 @@ function parseDate(raw: string): Date | null {
   }
 }
 
+const defaultFormValues: FormValues = {
+  amount: 0,
+  rawDate: "today",
+  parsedDate: parseDate("today"),
+  description: "",
+  account: "",
+  category: "",
+  accountFrom: "",
+  accountTo: "",
+};
+
 function TransactionForm({
   transactionType,
   addChange,
@@ -58,16 +69,7 @@ function TransactionForm({
   transactionType: TransactionType;
   addChange: (changes: LocalChange) => Promise<number>;
 }) {
-  const [values, setValues] = useState<FormValues>(() => ({
-    amount: 0,
-    rawDate: "today",
-    parsedDate: parseDate("today"),
-    description: "",
-    account: "",
-    category: "",
-    accountFrom: "",
-    accountTo: "",
-  }));
+  const [values, setValues] = useState<FormValues>(() => defaultFormValues);
 
   function setFieldValue<K extends keyof FormValues>(
     field: K,
@@ -111,6 +113,7 @@ function TransactionForm({
         });
         break;
     }
+    setValues(defaultFormValues);
   };
 
   return (

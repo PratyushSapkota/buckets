@@ -2,6 +2,10 @@
 
 import { DBSchema, openDB, IDBPDatabase } from "idb";
 
+export type StoredLocalChange = LocalChange & {
+  sequence: number;
+};
+
 interface LocalDB extends DBSchema {
   changes: {
     key: number;
@@ -50,7 +54,22 @@ export async function clearChanges(): Promise<void> {
   await db.clear("changes");
 }
 
-export async function getAllChanges() {
+export async function getAllChanges(): Promise<StoredLocalChange[]> {
   const db = await getDb();
-  return await db.getAll("changes");
+  const tx = db.transaction("changes", "readonly");
+  const changes: StoredLocalChange[] = [];
+
+  let cursor = await tx.store.openCursor();
+
+  while (cursor) {
+    changes.push({
+      ...cursor.value,
+      sequence: cursor.primaryKey,
+    });
+
+    cursor = await cursor.continue();
+  }
+
+  await tx.done;
+  return changes;
 }
