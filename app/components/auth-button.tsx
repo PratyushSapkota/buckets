@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import { signIn, signOut } from "next-auth/react";
+import { Button } from "@mantine/core";
 
-export default function AuthButton({ action }: { action: "signIn" | "signOut" }) {
+export default function AuthButton({
+  action,
+}: {
+  action: "signIn" | "signOut";
+}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
 
@@ -25,18 +30,14 @@ export default function AuthButton({ action }: { action: "signIn" | "signOut" })
 
   return (
     <>
-      <button type="button" onClick={handleClick} disabled={pending}>
+      <Button type="button" onClick={handleClick} disabled={pending}>
         {pending
           ? "Please wait…"
           : action === "signIn"
             ? "Continue with Google"
             : "Sign out"}
-      </button>
-      {error && (
-        <p className="auth-error" role="alert">
-          Something went wrong. Please try again.
-        </p>
-      )}
+      </Button>
+      {error && <p role="alert">Something went wrong. Please try again.</p>}
     </>
   );
 }

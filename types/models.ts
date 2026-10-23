@@ -40,7 +40,7 @@ type TransactionPatch =
   | ({ isTransfer: true } & EditableFields<TransferTransaction>)
   | ({ isTransfer: false } & EditableFields<NonTransferTransaction>);
 
-type LocalChange = { changeId: string; sequence: number } & (
+type LocalChange =
   | { action: "account/create"; account: Account }
   | { action: "account/archive"; accountId: AccountId }
   | { action: "transaction/create"; transaction: Transaction }
@@ -49,5 +49,4 @@ type LocalChange = { changeId: string; sequence: number } & (
       action: "transaction/update";
       transactionId: TransactionId;
       transactionPatch: TransactionPatch;
-    }
-);
+    };

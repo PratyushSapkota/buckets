@@ -22,12 +22,11 @@ export default async function Login({ searchParams }: PageProps<"/login">) {
   const errorCode = typeof error === "string" ? error : undefined;
 
   return (
-    <main className="auth-card">
-      <p className="eyebrow">Buckets</p>
+    <main>
+      <p>Buckets</p>
       <h1>Sign in</h1>
-      <p>Use your approved Google account to continue.</p>
       {errorCode && (
-        <p className="auth-error" role="alert">
+        <p role="alert">
           {Object.hasOwn(errorMessages, errorCode)
             ? errorMessages[errorCode]
             : "Unable to sign in. Please try again."}

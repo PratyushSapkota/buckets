@@ -2,6 +2,9 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import AuthButton from "@/app/components/auth-button";
 import { authOptions } from "@/lib/auth";
+import { FormTabs } from "./components/form/FormTabs";
+import { ChangeQueue } from "./components/localChanges/ChangeQueue";
+import { LedgerProvider } from "./components/ledger/LedgerProvider";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -11,11 +14,15 @@ export default async function Home() {
   }
 
   return (
-    <main className="auth-card">
-      <p className="eyebrow">Buckets</p>
-      <h1>Home</h1>
+    <main className="m-2">
       <p>Signed in as {session.user?.email}</p>
       <AuthButton action="signOut" />
+
+      <LedgerProvider sourceData={null}>
+        <FormTabs />
+        <ChangeQueue />
+      </LedgerProvider>
+
     </main>
   );
 }
