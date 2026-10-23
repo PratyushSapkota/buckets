@@ -1,11 +1,19 @@
-"use client"
-import { getAllChanges, pushChange } from "@/lib/localDb";
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+"use client";
+import { getAllChanges, pushChange, popChange } from "@/lib/localDb";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export type AddChange = (change: LocalChange) => Promise<number>;
 type LedgerContextValue = {
   localChanges: LocalChange[] | null;
   addChange: AddChange;
+  undoChange: () => void;
   refresh: () => void;
 };
 
@@ -50,8 +58,12 @@ export function LedgerProvider({
 
   async function addChange(change: LocalChange) {
     const sequence = await pushChange(change);
-
+    refresh();
     return sequence;
+  }
+  async function undoChange() {
+    await popChange();
+    refresh();
   }
 
   return (
@@ -60,6 +72,7 @@ export function LedgerProvider({
         addChange: addChange,
         localChanges: localChanges,
         refresh: refresh,
+        undoChange: undoChange
       }}
     >
       {children}
