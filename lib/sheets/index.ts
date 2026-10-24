@@ -46,4 +46,5 @@ export async function syncChanges(changes: LocalChange[]) {
   });
 
   await insertRows(creates, sheet);
+  await sheet.saveUpdatedCells()
 }

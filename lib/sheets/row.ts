@@ -57,6 +57,7 @@ export async function insertRows(
 
   await insertAccountRows(accountRows, sheet);
   await insertTransactionRows(transactionRows, sheet);
+  
 }
 
 async function insertAccountRows(
@@ -84,8 +85,6 @@ async function insertAccountRows(
       ).value = account[column];
     });
   });
-
-  await sheet.saveUpdatedCells();
 }
 
 async function insertTransactionRows(
@@ -113,6 +112,4 @@ async function insertTransactionRows(
       ).value = transaction[column];
     });
   });
-
-  await sheet.saveUpdatedCells();
 }
