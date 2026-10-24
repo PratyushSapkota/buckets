@@ -22,6 +22,7 @@ type TransferTransaction = BaseTransaction & {
   accountToId: AccountId;
   accountFromId: AccountId;
   transferPartnerId: TransactionId;
+  category: "inter-account-transfer"
 };
 
 type NonTransferTransaction = BaseTransaction & {

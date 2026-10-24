@@ -1,5 +1,11 @@
 "use client";
-import { getAllChanges, pushChange, popChange, type StoredLocalChange } from "@/lib/localDb";
+import {
+  getAllChanges,
+  pushChange,
+  popChange,
+  type StoredLocalChange,
+  clearChanges,
+} from "@/lib/localDb";
 import {
   createContext,
   ReactNode,
@@ -8,6 +14,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { syncLedgerChanges } from "./actions";
 
 export type AddChange = (change: LocalChange) => Promise<number>;
 type LedgerContextValue = {
@@ -15,6 +22,7 @@ type LedgerContextValue = {
   addChange: AddChange;
   undoChange: () => void;
   refresh: () => void;
+  syncChanges: () => void;
 };
 
 const LedgerContext = createContext<LedgerContextValue | null>(null);
@@ -27,7 +35,9 @@ export function LedgerProvider({
   children: ReactNode;
 }) {
   const [revision, setRevision] = useState(0);
-  const [localChanges, setLocalChanges] = useState<StoredLocalChange[] | null>(null);
+  const [storedLocalChanges, setStoredLocalChanges] = useState<
+    StoredLocalChange[] | null
+  >(null);
 
   useEffect(() => {
     let active = true;
@@ -35,7 +45,7 @@ export function LedgerProvider({
       (data) => {
         if (!active) return;
 
-        setLocalChanges(data);
+        setStoredLocalChanges(data);
       },
       (error) => {
         if (!active) return;
@@ -50,7 +60,7 @@ export function LedgerProvider({
   const ledger = useMemo(() => {
     // TODO
     // recompute here
-  }, [sourceData, localChanges]);
+  }, [sourceData, storedLocalChanges]);
 
   function refresh() {
     setRevision((curr) => curr + 1);
@@ -66,13 +76,27 @@ export function LedgerProvider({
     refresh();
   }
 
+  async function syncChanges() {
+    if (storedLocalChanges == null) {
+      console.log("EMPTY");
+      return;
+    }
+    const localChanges: LocalChange[] = storedLocalChanges.map(
+      ({ sequence, ...change }) => change,
+    );
+    await syncLedgerChanges(localChanges);
+    await clearChanges();
+    refresh();
+  }
+
   return (
     <LedgerContext.Provider
       value={{
         addChange: addChange,
-        localChanges: localChanges,
+        localChanges: storedLocalChanges,
         refresh: refresh,
-        undoChange: undoChange
+        undoChange: undoChange,
+        syncChanges: syncChanges,
       }}
     >
       {children}
