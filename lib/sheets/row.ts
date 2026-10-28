@@ -1,3 +1,4 @@
+import { LocalChange, Transaction } from "@/types/models";
 import { AccountRow, TransactionRow, SHEET_SCHEMA } from "./schema";
 import { type GoogleSpreadsheetWorksheet } from "google-spreadsheet";
 
@@ -64,6 +65,7 @@ async function insertAccountRows(
   accountRows: AccountRow[],
   sheet: GoogleSpreadsheetWorksheet,
 ) {
+  if (accountRows.length == 0) return;
   const range = {
     startRowIndex: 1, // exclude header
     endRowIndex: 1 + accountRows.length,
@@ -91,6 +93,7 @@ async function insertTransactionRows(
   transactionRows: TransactionRow[],
   sheet: GoogleSpreadsheetWorksheet,
 ) {
+  if (transactionRows.length == 0) return;
   const range = {
     startRowIndex: 1, // exclude header
     endRowIndex: 1 + transactionRows.length,

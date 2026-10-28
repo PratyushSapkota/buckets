@@ -10,9 +10,29 @@ function columnIndex(column: string): number {
   );
 }
 
+function toLetter(index: number): string {
+  let result = "";
+  for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26)) {
+    result = String.fromCharCode(65 + ((n - 1) % 26)) + result;
+  }
+  return result;
+}
 
-const TRANSACTIONS_COLUMN_START = "A";
-const ACCOUNTS_COLUMN_START = "I";
+function createTable<T extends { shape: Record<string, unknown> }>(
+  columnStart: string,
+  columns: T,
+) {
+  const columnStartIndex = columnIndex(columnStart);
+  const columnEndIndex = columnStartIndex + Object.keys(columns.shape).length;
+
+  return {
+    columnStart,
+    columnEnd: toLetter(columnEndIndex - 1),
+    columnStartIndex,
+    columnEndIndex,
+    columns,
+  };
+}
 
 const TRANSACTION_COLUMNS = z.object({
   id: z.string(),
@@ -33,24 +53,10 @@ const ACCOUNT_COLUMNS = z.object({
 });
 
 export const SHEET_SCHEMA = {
-  TRANSACTIONS: {
-    columnStart: TRANSACTIONS_COLUMN_START,
-    columnStartIndex: columnIndex(TRANSACTIONS_COLUMN_START),
-    columnEndIndex:
-      columnIndex(TRANSACTIONS_COLUMN_START) +
-      Object.keys(TRANSACTION_COLUMNS.shape).length,
-    columns: TRANSACTION_COLUMNS,
-  },
-  ACCOUNTS: {
-    columnStart: ACCOUNTS_COLUMN_START,
-    columnStartIndex: columnIndex(ACCOUNTS_COLUMN_START),
-    columnEndIndex:
-      columnIndex(ACCOUNTS_COLUMN_START) +
-      Object.keys(ACCOUNT_COLUMNS.shape).length,
-    columns: ACCOUNT_COLUMNS,
-  },
+  TRANSACTIONS: createTable("A", TRANSACTION_COLUMNS),
+  ACCOUNTS: createTable("I", ACCOUNT_COLUMNS),
+  PIVOT: { columnStart: "O", columnEnd: "Q" },
 } as const;
-
 
 export type TransactionRow = z.infer<typeof SHEET_SCHEMA.TRANSACTIONS.columns>;
 export type AccountRow = z.infer<typeof SHEET_SCHEMA.ACCOUNTS.columns>;

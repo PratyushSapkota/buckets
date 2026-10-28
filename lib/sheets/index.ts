@@ -4,22 +4,31 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth";
 import { getSheet } from "./client";
 import { Creates, insertRows } from "./row";
+import { LocalChange, SourceData } from "@/types/models";
+import { getAccounts } from "./accounts";
+import {
+  getPivotRows,
+  mapAccountBalances,
+  mapCategoricalAmounts,
+} from "./pivotValues";
 
-export async function syncChanges(changes: LocalChange[]) {
+export async function getAuthenticatedEmail(): Promise<string> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     throw new Error("Auth required");
   }
 
-  const email = session.user.email;
-
-  if (!email) {
+  if (!session.user.email) {
     throw new Error("User email is missing");
   }
 
+  return session.user.email;
+}
+
+export async function syncChanges(changes: LocalChange[]) {
+  const email = await getAuthenticatedEmail();
   const sheet = await getSheet(email);
-  
 
   // might have to shuffle these around
   // 1. insert the creates
@@ -46,5 +55,16 @@ export async function syncChanges(changes: LocalChange[]) {
   });
 
   await insertRows(creates, sheet);
-  await sheet.saveUpdatedCells()
+  await sheet.saveUpdatedCells();
+}
+
+export async function getSheetData(): Promise<SourceData> {
+  const email = await getAuthenticatedEmail();
+  const sheet = await getSheet(email);
+  const pivotRows = await getPivotRows(sheet);
+  const accounts = await getAccounts(sheet);
+  return {
+    accounts: mapAccountBalances(pivotRows, accounts),
+    categoricalAmount: mapCategoricalAmounts(pivotRows, accounts),
+  };
 }

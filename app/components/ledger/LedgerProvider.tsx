@@ -15,9 +15,12 @@ import {
   useState,
 } from "react";
 import { syncLedgerChanges } from "./actions";
+import { Ledger, LocalChange, SourceData } from "@/types/models";
+import { computeLedger } from "@/lib/ledger";
 
 export type AddChange = (change: LocalChange) => Promise<number>;
 type LedgerContextValue = {
+  ledger: Ledger | null;
   localChanges: StoredLocalChange[] | null;
   addChange: AddChange;
   undoChange: () => void;
@@ -31,7 +34,7 @@ export function LedgerProvider({
   sourceData,
   children,
 }: {
-  sourceData: any;
+  sourceData: SourceData;
   children: ReactNode;
 }) {
   const [revision, setRevision] = useState(0);
@@ -58,8 +61,10 @@ export function LedgerProvider({
   }, [revision]);
 
   const ledger = useMemo(() => {
-    // TODO
-    // recompute here
+    if (storedLocalChanges === null) {
+      return null;
+    }
+    return computeLedger(storedLocalChanges, sourceData);
   }, [sourceData, storedLocalChanges]);
 
   function refresh() {
@@ -92,6 +97,7 @@ export function LedgerProvider({
   return (
     <LedgerContext.Provider
       value={{
+        ledger: ledger,
         addChange: addChange,
         localChanges: storedLocalChanges,
         refresh: refresh,

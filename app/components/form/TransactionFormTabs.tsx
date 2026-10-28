@@ -1,10 +1,11 @@
 "use client";
+import * as chrono from "chrono-node";
 import { Button, Grid, NumberInput, Tabs, TextInput } from "@mantine/core";
 import { type SubmitEventHandler, useState } from "react";
-
-import * as chrono from "chrono-node";
 import { addExpense, addIncome, addTransfer } from "./transactionActions";
 import { useLedger } from "../ledger/LedgerProvider";
+import { AccountId, Ledger, LedgerAccount, LocalChange } from "@/types/models";
+import { AccountSelect } from "./AccountSelect";
 
 type TransactionType = "income" | "expense" | "transfer";
 
@@ -20,8 +21,11 @@ type FormValues = {
 };
 
 export function TransactionFormTabs() {
-  const { addChange } = useLedger();
+  const { addChange, ledger } = useLedger();
 
+  if (ledger == null) {
+    return <div>loading</div>;
+  }
   return (
     <Tabs defaultValue="expense" w="40ch" maw="100%">
       <Tabs.List>
@@ -31,13 +35,25 @@ export function TransactionFormTabs() {
       </Tabs.List>
 
       <Tabs.Panel value="income">
-        <TransactionForm addChange={addChange} transactionType="income" />
+        <TransactionForm
+          addChange={addChange}
+          transactionType="income"
+          ledger={ledger}
+        />
       </Tabs.Panel>
       <Tabs.Panel value="expense">
-        <TransactionForm addChange={addChange} transactionType="expense" />
+        <TransactionForm
+          addChange={addChange}
+          transactionType="expense"
+          ledger={ledger}
+        />
       </Tabs.Panel>
       <Tabs.Panel value="transfer">
-        <TransactionForm addChange={addChange} transactionType="transfer" />
+        <TransactionForm
+          addChange={addChange}
+          transactionType="transfer"
+          ledger={ledger}
+        />
       </Tabs.Panel>
     </Tabs>
   );
@@ -49,6 +65,12 @@ function parseDate(raw: string): Date | null {
   } catch {
     return null;
   }
+}
+
+function excludeOne(toExclude: AccountId, ledger: Ledger): LedgerAccount[] {
+  return Array.from(ledger.accounts.values()).filter(
+    ({ account }) => account.id !== toExclude,
+  );
 }
 
 const defaultFormValues: FormValues = {
@@ -65,9 +87,11 @@ const defaultFormValues: FormValues = {
 function TransactionForm({
   transactionType,
   addChange,
+  ledger,
 }: {
   transactionType: TransactionType;
   addChange: (changes: LocalChange) => Promise<number>;
+  ledger: Ledger;
 }) {
   const [values, setValues] = useState<FormValues>(() => defaultFormValues);
 
@@ -155,33 +179,30 @@ function TransactionForm({
         {transactionType === "transfer" ? (
           <>
             <Grid.Col span={6}>
-              <TextInput
+              <AccountSelect
                 label="From"
-                value={values.accountFrom}
-                onChange={(e) =>
-                  setFieldValue("accountFrom", e.currentTarget.value)
-                }
+                accounts={excludeOne(values.accountTo as AccountId, ledger)}
+                selectedAccount={values.accountFrom}
+                onChange={(value) => setFieldValue("accountFrom", value)}
               />
             </Grid.Col>
             <Grid.Col span={6}>
-              <TextInput
+              <AccountSelect
                 label="To"
-                value={values.accountTo}
-                onChange={(e) =>
-                  setFieldValue("accountTo", e.currentTarget.value)
-                }
+                accounts={excludeOne(values.accountFrom as AccountId, ledger)}
+                selectedAccount={values.accountTo}
+                onChange={(value) => setFieldValue("accountTo", value)}
               />
             </Grid.Col>
           </>
         ) : (
           <>
             <Grid.Col span={6}>
-              <TextInput
+              <AccountSelect
                 label="Account"
-                value={values.account}
-                onChange={(e) =>
-                  setFieldValue("account", e.currentTarget.value)
-                }
+                accounts={Array.from(ledger.accounts.values())}
+                selectedAccount={values.account}
+                onChange={(value) => setFieldValue("account", value)}
               />
             </Grid.Col>
             <Grid.Col span={6}>

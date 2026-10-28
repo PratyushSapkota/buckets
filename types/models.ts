@@ -1,9 +1,9 @@
 type Brand<T, B extends string> = T & { readonly __brand: B };
 
-type AccountId = Brand<string, "AccountId">;
-type TransactionId = Brand<string, "TransactionId">;
+export type AccountId = Brand<string, "AccountId">;
+export type TransactionId = Brand<string, "TransactionId">;
 
-type Account = {
+export type Account = {
   id: AccountId;
   name: string;
   color: string;
@@ -22,7 +22,7 @@ type TransferTransaction = BaseTransaction & {
   accountToId: AccountId;
   accountFromId: AccountId;
   transferPartnerId: TransactionId;
-  category: "inter-account-transfer"
+  category: "inter-account-transfer";
 };
 
 type NonTransferTransaction = BaseTransaction & {
@@ -31,9 +31,9 @@ type NonTransferTransaction = BaseTransaction & {
   category: string;
 };
 
-type Transaction = TransferTransaction | NonTransferTransaction;
+export type Transaction = TransferTransaction | NonTransferTransaction;
 
-type EditableFields<T> = Partial<
+export type EditableFields<T> = Partial<
   Omit<T, "id" | "isTransfer" | "transferPartnerId">
 >;
 
@@ -41,7 +41,7 @@ type TransactionPatch =
   | ({ isTransfer: true } & EditableFields<TransferTransaction>)
   | ({ isTransfer: false } & EditableFields<NonTransferTransaction>);
 
-type LocalChange =
+export type LocalChange =
   | { action: "account/create"; account: Account }
   | { action: "account/archive"; accountId: AccountId }
   | { action: "transaction/create"; transaction: Transaction }
@@ -51,3 +51,30 @@ type LocalChange =
       transactionId: TransactionId;
       transactionPatch: TransactionPatch;
     };
+
+export type AccountWithBalance = Account & { balanceMinor: number };
+
+export type CategoryAmount = Record<
+  AccountId,
+  { category: string; amountMinor: number }[]
+>;
+export type SourceData = {
+  accounts: AccountWithBalance[];
+  categoricalAmount: CategoryAmount;
+};
+
+type CategoryTotal = Readonly<{
+  category: string;
+  amountMinor: number;
+}>;
+
+export type LedgerAccount = Readonly<{
+  account: Readonly<Account>;
+  origin: "source" | "local";
+  balanceMinor: number;
+  categoryAmounts: readonly CategoryTotal[];
+}>;
+
+export type Ledger = Readonly<{
+  accounts: ReadonlyMap<AccountId, LedgerAccount>;
+}>;
