@@ -1,6 +1,8 @@
 "use client";
 
+import { LocalChange, SourceData } from "@/types/models";
 import { DBSchema, openDB, IDBPDatabase } from "idb";
+import { computeLedger, validateTransactionAccount } from "../ledger";
 
 export type StoredLocalChange = LocalChange & {
   sequence: number;
@@ -72,4 +74,36 @@ export async function getAllChanges(): Promise<StoredLocalChange[]> {
 
   await tx.done;
   return changes;
+}
+
+
+export async function pushValidatedChange(
+  change: LocalChange,
+  sourceData: SourceData,
+): Promise<number> {
+  const db = await getDb();
+  const tx = db.transaction("changes", "readwrite");
+
+  try {
+    // Read the current queue, including any completed undo.
+    const changes = await tx.store.getAll();
+    const ledger = computeLedger(changes, sourceData);
+
+    if (change.action === "transaction/create") {
+      validateTransactionAccount(change.transaction, ledger);
+    }
+
+    const sequence = await tx.store.add(change);
+    await tx.done;
+
+    return sequence;
+  } catch (error) {
+    // Abort if still active and consume the transaction rejection.
+    try {
+      tx.abort();
+    } catch {}
+
+    await tx.done.catch(() => {});
+    throw error;
+  }
 }

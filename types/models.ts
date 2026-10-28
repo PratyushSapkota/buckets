@@ -17,7 +17,7 @@ type BaseTransaction = {
   description: string;
 };
 
-type TransferTransaction = BaseTransaction & {
+export type TransferTransaction = BaseTransaction & {
   isTransfer: true;
   accountToId: AccountId;
   accountFromId: AccountId;
@@ -25,7 +25,7 @@ type TransferTransaction = BaseTransaction & {
   category: "inter-account-transfer";
 };
 
-type NonTransferTransaction = BaseTransaction & {
+export type NonTransferTransaction = BaseTransaction & {
   isTransfer: false;
   accountId: AccountId;
   category: string;

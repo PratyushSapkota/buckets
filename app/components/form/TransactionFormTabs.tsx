@@ -1,6 +1,13 @@
 "use client";
 import * as chrono from "chrono-node";
-import { Button, Grid, NumberInput, Tabs, TextInput } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Grid,
+  NumberInput,
+  Tabs,
+  TextInput,
+} from "@mantine/core";
 import { type SubmitEventHandler, useState } from "react";
 import { addExpense, addIncome, addTransfer } from "./transactionActions";
 import { useLedger } from "../ledger/LedgerProvider";
@@ -102,6 +109,8 @@ function TransactionForm({
     setValues((current) => ({ ...current, [field]: value }));
   }
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     if (!values.parsedDate) {
@@ -115,33 +124,46 @@ function TransactionForm({
       description: values.description,
     };
 
-    switch (transactionType) {
-      case "income":
-      case "expense": {
-        const input = {
-          ...base,
-          accountId: values.account as AccountId, // cast once, here
-          category: values.category,
-        };
-        await (transactionType === "income" ? addIncome : addExpense)(
-          addChange,
-          input,
-        );
-        break;
+    try {
+      switch (transactionType) {
+        case "income":
+        case "expense": {
+          const input = {
+            ...base,
+            accountId: values.account as AccountId, // cast once, here
+            category: values.category,
+          };
+          await (transactionType === "income" ? addIncome : addExpense)(
+            addChange,
+            input,
+          );
+          break;
+        }
+        case "transfer":
+          await addTransfer(addChange, {
+            ...base,
+            accountFromId: values.accountFrom as AccountId,
+            accountToId: values.accountTo as AccountId,
+          });
+          break;
       }
-      case "transfer":
-        await addTransfer(addChange, {
-          ...base,
-          accountFromId: values.accountFrom as AccountId,
-          accountToId: values.accountTo as AccountId,
-        });
-        break;
+      setValues(defaultFormValues);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Please contact support",
+      );
+      console.log(error)
     }
-    setValues(defaultFormValues);
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {submitError && (
+        <Alert title="Unable to add transaction" role="alert" color="red">
+          {submitError}
+        </Alert>
+      )}
+
       <Grid>
         <Grid.Col span={6}>
           <NumberInput

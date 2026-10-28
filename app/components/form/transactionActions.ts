@@ -1,3 +1,10 @@
+import {
+  Transaction,
+  TransactionId,
+  AccountId,
+  NonTransferTransaction,
+  TransferTransaction,
+} from "@/types/models";
 import { AddChange } from "../ledger/LedgerProvider";
 
 type BaseInput = {
@@ -65,8 +72,11 @@ export function createTransferTransaction(
     accountFromId: input.accountFromId,
     accountToId: input.accountToId,
     transferPartnerId: crypto.randomUUID() as TransactionId, // see note 6
+    category: "inter-account-transfer",
   };
 }
+
+
 
 // ---------- persistence ----------
 

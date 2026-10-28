@@ -1,10 +1,10 @@
 "use client";
 import {
   getAllChanges,
-  pushChange,
   popChange,
   type StoredLocalChange,
   clearChanges,
+  pushValidatedChange,
 } from "@/lib/localDb";
 import {
   createContext,
@@ -72,7 +72,7 @@ export function LedgerProvider({
   }
 
   async function addChange(change: LocalChange) {
-    const sequence = await pushChange(change);
+    const sequence = await pushValidatedChange(change, sourceData);
     refresh();
     return sequence;
   }
@@ -83,7 +83,6 @@ export function LedgerProvider({
 
   async function syncChanges() {
     if (storedLocalChanges == null) {
-      console.log("EMPTY");
       return;
     }
     const localChanges: LocalChange[] = storedLocalChanges.map(
