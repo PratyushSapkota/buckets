@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { isAllowedEmail } from "./allowlist";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -22,12 +23,7 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
-      const allowedEmails = (process.env.GOOGLE_OAUTH_ALLOWED_EMAILS ?? "")
-        .split(",")
-        .map((email) => email.trim().toLowerCase())
-        .filter(Boolean);
-
-      return allowedEmails.includes(profile.email.trim().toLowerCase());
+      return isAllowedEmail(profile.email);
     },
   },
 };

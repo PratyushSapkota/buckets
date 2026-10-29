@@ -13,16 +13,22 @@ import {
 } from "./pivotValues";
 import { getTransactions } from "./transactions";
 import { parseChanges, validateReferences } from "./validation";
+import { isAllowedEmail } from "../allowlist";
+import { LedgerError } from "../ledgerErrors";
 
 export async function getAuthenticatedEmail(): Promise<string> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    throw new Error("Auth required");
+    throw new LedgerError("UNAUTHORIZED", "Please sign in before accessing your ledger.");
   }
 
   if (!session.user.email) {
-    throw new Error("User email is missing");
+    throw new LedgerError("UNAUTHORIZED", "Your session is missing an email. Please sign in again.");
+  }
+
+  if (!isAllowedEmail(session.user.email)) {
+    throw new LedgerError("FORBIDDEN", "This account does not have access to the ledger.");
   }
 
   return session.user.email;

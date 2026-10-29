@@ -15,6 +15,7 @@ import { syncLedgerChanges } from "@/app/components/ledger/actions";
 describe("sync server boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("GOOGLE_OAUTH_ALLOWED_EMAILS", "owner@example.com");
     mocks.session.mockResolvedValue({ user: { email: "owner@example.com" } });
     mocks.getSheet.mockResolvedValue({ saveUpdatedCells: mocks.save });
     mocks.getAccounts.mockResolvedValue([account]);
@@ -24,6 +25,11 @@ describe("sync server boundary", () => {
     expect(await syncLedgerChanges([{ action: "transaction/create", transaction: { ...transaction, amountMinor: 1.5 } }])).toMatchObject({ ok: false, code: "VALIDATION", issues: expect.any(Array) });
     expect(mocks.getSheet).not.toHaveBeenCalled();
     expect(mocks.insertRows).not.toHaveBeenCalled();
+  });
+  it.each([null, { user: {} }, { user: { email: "removed@example.com" } }])("denies unauthorized session %j before Google access", async (session) => {
+    mocks.session.mockResolvedValue(session);
+    expect(await syncLedgerChanges([{ action: "transaction/create", transaction }])).toMatchObject({ ok: false });
+    expect(mocks.getSheet).not.toHaveBeenCalled();
   });
   it("rejects missing account references before writes", async () => {
     mocks.getAccounts.mockResolvedValue([]);
