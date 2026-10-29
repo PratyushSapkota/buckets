@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { signIn, signOut } from "next-auth/react";
 import { Button } from "@mantine/core";
+import { clearChanges } from "@/lib/localDb";
 
 export default function AuthButton({
   action,
@@ -10,21 +11,28 @@ export default function AuthButton({
   action: "signIn" | "signOut";
 }) {
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
 
   async function handleClick() {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setPending(true);
-    setError(false);
+    setError(null);
+    let cleaned = false;
 
     try {
+      await clearChanges();
+      cleaned = true;
       if (action === "signIn") {
         await signIn("google", { callbackUrl: "/" });
       } else {
         await signOut({ callbackUrl: "/login" });
       }
     } catch {
-      setError(true);
+      setError(cleaned ? "Unable to complete sign-in or sign-out. Please try again." : "Unable to clear pending changes. Please try again before signing in or out.");
       setPending(false);
+      inFlight.current = false;
     }
   }
 
@@ -37,7 +45,7 @@ export default function AuthButton({
             ? "Continue with Google"
             : "Sign out"}
       </Button>
-      {error && <p role="alert">Something went wrong. Please try again.</p>}
+      {error && <p role="alert">{error}</p>}
     </>
   );
 }
