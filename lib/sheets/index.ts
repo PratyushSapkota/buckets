@@ -44,7 +44,6 @@ export async function syncChanges(input: unknown) {
   validateReferences(creates, accounts, transactions);
   if (creates.length) {
     await insertRows(creates, sheet);
-    await sheet.saveUpdatedCells();
   }
 }
 

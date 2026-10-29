@@ -15,6 +15,7 @@ it("requires Google to verify an allowed email at sign-in", async () => {
   const signIn = authOptions.callbacks!.signIn!;
   const input = { user: { id: "test" }, account: { provider: "google", type: "oauth" as const, providerAccountId: "test" }, profile: { email: "owner@example.com", email_verified: true } };
   expect(await signIn(input)).toBe(true);
-  expect(await signIn({ ...input, profile: { ...input.profile, email_verified: false } })).toBe(false);
+  const unverified = { ...input, profile: { ...input.profile, email_verified: false } };
+  expect(await signIn(unverified)).toBe(false);
   expect(await signIn({ ...input, account: { ...input.account, provider: "other" } })).toBe(false);
 });

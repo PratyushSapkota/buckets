@@ -1,6 +1,7 @@
 import { LocalChange, Transaction } from "@/types/models";
 import { AccountRow, TransactionRow, SHEET_SCHEMA } from "./schema";
 import { type GoogleSpreadsheetWorksheet } from "google-spreadsheet";
+import { commitSheetBatch } from "./client";
 
 export function transactionToRow(transaction: Transaction): TransactionRow[] {
   if (transaction.isTransfer) {
@@ -39,12 +40,25 @@ export function transactionToRow(transaction: Transaction): TransactionRow[] {
   }
 }
 export type Creates = Extract<LocalChange, { action: `${string}/create` }>[];
+type CellValue = { stringValue: string } | { numberValue: number } | { boolValue: boolean };
+export type SheetBatchRequest =
+  | { insertRange: { range: { sheetId: number; startRowIndex: number; endRowIndex: number; startColumnIndex: number; endColumnIndex: number }; shiftDimension: "ROWS" } }
+  | { updateCells: { start: { sheetId: number; rowIndex: number; columnIndex: number }; rows: { values: { userEnteredValue: CellValue }[] }[]; fields: "userEnteredValue" } };
+
+function tableRequests(sheetId: number, columnStartIndex: number, rows: (string | number | boolean)[][]): SheetBatchRequest[] {
+  if (!rows.length) return [];
+  return [
+    { insertRange: { range: { sheetId, startRowIndex: 1, endRowIndex: 1 + rows.length, startColumnIndex: columnStartIndex, endColumnIndex: columnStartIndex + rows[0].length }, shiftDimension: "ROWS" } },
+    { updateCells: { start: { sheetId, rowIndex: 1, columnIndex: columnStartIndex }, rows: rows.map((row) => ({ values: row.map((value) => ({ userEnteredValue: typeof value === "string" ? { stringValue: value } : typeof value === "number" ? { numberValue: value } : { boolValue: value } })) })), fields: "userEnteredValue" } },
+  ];
+}
+
 export async function insertRows(
   changes: Creates,
   sheet: GoogleSpreadsheetWorksheet,
 ) {
-  let transactionRows: TransactionRow[] = [];
-  let accountRows: AccountRow[] = [];
+  const transactionRows: TransactionRow[] = [];
+  const accountRows: AccountRow[] = [];
 
   changes.forEach((change) => {
     switch (change.action) {
@@ -56,63 +70,9 @@ export async function insertRows(
     }
   });
 
-  await insertAccountRows(accountRows, sheet);
-  await insertTransactionRows(transactionRows, sheet);
-  
-}
-
-async function insertAccountRows(
-  accountRows: AccountRow[],
-  sheet: GoogleSpreadsheetWorksheet,
-) {
-  if (accountRows.length == 0) return;
-  const range = {
-    startRowIndex: 1, // exclude header
-    endRowIndex: 1 + accountRows.length,
-    startColumnIndex: SHEET_SCHEMA.ACCOUNTS.columnStartIndex,
-    endColumnIndex: SHEET_SCHEMA.ACCOUNTS.columnEndIndex,
-  };
-  await sheet.insertRange(range, "ROWS");
-  await sheet.loadCells(range);
-
-  const columns = Object.keys(
-    SHEET_SCHEMA.ACCOUNTS.columns.shape,
-  ) as (keyof AccountRow)[];
-
-  accountRows.forEach((account, accountIndex) => {
-    columns.forEach((column, columnOffset) => {
-      sheet.getCell(
-        accountIndex + 1,
-        range.startColumnIndex + columnOffset,
-      ).value = account[column];
-    });
-  });
-}
-
-async function insertTransactionRows(
-  transactionRows: TransactionRow[],
-  sheet: GoogleSpreadsheetWorksheet,
-) {
-  if (transactionRows.length == 0) return;
-  const range = {
-    startRowIndex: 1, // exclude header
-    endRowIndex: 1 + transactionRows.length,
-    startColumnIndex: SHEET_SCHEMA.TRANSACTIONS.columnStartIndex,
-    endColumnIndex: SHEET_SCHEMA.TRANSACTIONS.columnEndIndex,
-  };
-  await sheet.insertRange(range, "ROWS");
-  await sheet.loadCells(range);
-
-  const columns = Object.keys(
-    SHEET_SCHEMA.TRANSACTIONS.columns.shape,
-  ) as (keyof TransactionRow)[];
-
-  transactionRows.forEach((transaction, transactionIndex) => {
-    columns.forEach((column, columnOffset) => {
-      sheet.getCell(
-        transactionIndex + 1,
-        range.startColumnIndex + columnOffset,
-      ).value = transaction[column];
-    });
-  });
+  const requests = [
+    ...tableRequests(sheet.sheetId, SHEET_SCHEMA.ACCOUNTS.columnStartIndex, accountRows.map((row) => [row.id, row.name, row.color, row.bucket, row.archived])),
+    ...tableRequests(sheet.sheetId, SHEET_SCHEMA.TRANSACTIONS.columnStartIndex, transactionRows.map((row) => [row.id, row.amount, row.account, row.category, row.date, row.description, row.transferPartner])),
+  ];
+  if (requests.length) await commitSheetBatch(requests);
 }
