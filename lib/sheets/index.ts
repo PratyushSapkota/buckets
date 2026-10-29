@@ -15,6 +15,7 @@ import { getTransactions } from "./transactions";
 import { parseChanges, validateReferences } from "./validation";
 import { isAllowedEmail } from "../allowlist";
 import { LedgerError } from "../ledgerErrors";
+import { uncommittedCreates } from "./idempotency";
 
 export async function getAuthenticatedEmail(): Promise<string> {
   const session = await getServerSession(authOptions);
@@ -39,9 +40,12 @@ export async function syncChanges(input: unknown) {
   const changes = parseChanges(input);
   const sheet = await getSheet(email);
   const [accounts, transactions] = await Promise.all([getAccounts(sheet), getTransactions(sheet)]);
-  validateReferences(changes, accounts, transactions);
-  await insertRows(changes, sheet);
-  await sheet.saveUpdatedCells();
+  const creates = uncommittedCreates(changes, accounts, transactions);
+  validateReferences(creates, accounts, transactions);
+  if (creates.length) {
+    await insertRows(creates, sheet);
+    await sheet.saveUpdatedCells();
+  }
 }
 
 export async function getSheetData(): Promise<SourceData> {

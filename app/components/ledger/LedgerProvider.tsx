@@ -17,6 +17,7 @@ import {
 import { syncLedgerChanges } from "./actions";
 import { Ledger, LocalChange, SourceData } from "@/types/models";
 import { computeLedger } from "@/lib/ledger";
+import { useRouter } from "next/navigation";
 
 export type AddChange = (change: LocalChange) => Promise<number>;
 type LedgerContextValue = {
@@ -37,6 +38,7 @@ export function LedgerProvider({
   sourceData: SourceData;
   children: ReactNode;
 }) {
+  const router = useRouter();
   const [revision, setRevision] = useState(0);
   const [storedLocalChanges, setStoredLocalChanges] = useState<
     StoredLocalChange[] | null
@@ -92,6 +94,7 @@ export function LedgerProvider({
     if (!result.ok) throw new Error(result.message);
     await clearChanges();
     refresh();
+    router.refresh();
   }
 
   return (

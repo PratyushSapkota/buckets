@@ -10,6 +10,7 @@ export async function getAccounts(
 
   const schema = SHEET_SCHEMA.ACCOUNTS.columns;
   const keys = Object.keys(schema.shape);
+  const ids = new Set<string>();
 
   return (rows ?? [])
     .filter((row) => row[0])
@@ -20,6 +21,8 @@ export async function getAccounts(
         ...data,
         archived: data.archived === true || data.archived === "TRUE",
       });
+      if (!account.id.trim() || ids.has(account.id)) throw new Error("Invalid or duplicate account ID in worksheet");
+      ids.add(account.id);
 
       return {
         ...account,

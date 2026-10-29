@@ -9,7 +9,7 @@ vi.mock("@/lib/auth", () => ({ authOptions: {} }));
 vi.mock("@/lib/sheets/client", () => ({ getSheet: mocks.getSheet }));
 vi.mock("@/lib/sheets/accounts", () => ({ getAccounts: mocks.getAccounts }));
 vi.mock("@/lib/sheets/transactions", () => ({ getTransactions: mocks.getTransactions }));
-vi.mock("@/lib/sheets/row", () => ({ insertRows: mocks.insertRows }));
+vi.mock("@/lib/sheets/row", async (importOriginal) => ({ ...await importOriginal<typeof import("@/lib/sheets/row")>(), insertRows: mocks.insertRows }));
 import { syncLedgerChanges } from "@/app/components/ledger/actions";
 
 describe("sync server boundary", () => {
@@ -39,6 +39,17 @@ describe("sync server boundary", () => {
   it("writes a valid batch", async () => {
     expect(await syncLedgerChanges([{ action: "transaction/create", transaction }])).toEqual({ ok: true });
     expect(mocks.insertRows).toHaveBeenCalledOnce();
+  });
+  it("acknowledges a committed retry without writing again", async () => {
+    mocks.getTransactions.mockResolvedValue([transaction]);
+    expect(await syncLedgerChanges([{ action: "transaction/create", transaction }])).toEqual({ ok: true });
+    expect(mocks.insertRows).not.toHaveBeenCalled();
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
+  it("rejects conflicting retries before writes", async () => {
+    mocks.getTransactions.mockResolvedValue([{ ...transaction, amountMinor: -200 }]);
+    expect(await syncLedgerChanges([{ action: "transaction/create", transaction }])).toMatchObject({ ok: false, code: "CONFLICT" });
+    expect(mocks.insertRows).not.toHaveBeenCalled();
   });
   it("does not expose upstream error details", async () => {
     mocks.insertRows.mockRejectedValueOnce(new Error("private credential details"));

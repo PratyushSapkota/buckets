@@ -2,7 +2,7 @@ import { LocalChange, Transaction } from "@/types/models";
 import { AccountRow, TransactionRow, SHEET_SCHEMA } from "./schema";
 import { type GoogleSpreadsheetWorksheet } from "google-spreadsheet";
 
-function transactionToRow(transaction: Transaction): TransactionRow[] {
+export function transactionToRow(transaction: Transaction): TransactionRow[] {
   if (transaction.isTransfer) {
     return [
       {
