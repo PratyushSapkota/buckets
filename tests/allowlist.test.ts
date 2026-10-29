@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
+vi.mock("@/lib/config", () => ({ getServerConfig: () => ({ NEXTAUTH_SECRET: "test-secret-for-config-isolation-only", GOOGLE_OAUTH_CLIENT_ID: "test-client", GOOGLE_OAUTH_CLIENT_SECRET: "test-client-secret" }) }));
 import { isAllowedEmail } from "@/lib/allowlist";
 import { authOptions } from "@/lib/auth";
 
