@@ -56,6 +56,13 @@ export async function clearChanges(): Promise<void> {
   await db.clear("changes");
 }
 
+export async function removeChanges(sequences: number[]): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction("changes", "readwrite");
+  await Promise.all(sequences.map((sequence) => tx.store.delete(sequence)));
+  await tx.done;
+}
+
 export async function getAllChanges(): Promise<StoredLocalChange[]> {
   const db = await getDb();
   const tx = db.transaction("changes", "readonly");
