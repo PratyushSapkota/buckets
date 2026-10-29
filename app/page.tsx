@@ -9,6 +9,7 @@ import { AccountForm } from "./components/form/AccountForm";
 import { SourceData } from "@/types/models";
 import { getSheetData } from "@/lib/sheets";
 import { AccountList } from "./components/ledger/AccountList";
+import { TransactionTable } from "./components/ledger/TransactionTable";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -26,6 +27,8 @@ export default async function Home() {
 
       <LedgerProvider sourceData={sourceData}>
         <AccountList />
+        <hr />
+        <TransactionTable />
         <hr />
         <TransactionFormTabs />
         <hr />

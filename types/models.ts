@@ -61,6 +61,7 @@ export type CategoryAmount = Record<
 export type SourceData = {
   accounts: AccountWithBalance[];
   categoricalAmount: CategoryAmount;
+  transaction: Transaction[]
 };
 
 type CategoryTotal = Readonly<{
@@ -74,7 +75,12 @@ export type LedgerAccount = Readonly<{
   balanceMinor: number;
   categoryAmounts: readonly CategoryTotal[];
 }>;
+export type LedgerTransaction = Readonly<{
+  transaction: Readonly<Transaction>;
+  origin: "source" | "local";
+}>;
 
 export type Ledger = Readonly<{
   accounts: ReadonlyMap<AccountId, LedgerAccount>;
+  transactions: ReadonlyMap<TransactionId, LedgerTransaction>;
 }>;

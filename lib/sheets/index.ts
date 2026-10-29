@@ -11,6 +11,7 @@ import {
   mapAccountBalances,
   mapCategoricalAmounts,
 } from "./pivotValues";
+import { getTransactions } from "./transactions";
 
 export async function getAuthenticatedEmail(): Promise<string> {
   const session = await getServerSession(authOptions);
@@ -63,8 +64,10 @@ export async function getSheetData(): Promise<SourceData> {
   const sheet = await getSheet(email);
   const pivotRows = await getPivotRows(sheet);
   const accounts = await getAccounts(sheet);
+  const transactions = await getTransactions(sheet);
   return {
     accounts: mapAccountBalances(pivotRows, accounts),
     categoricalAmount: mapCategoricalAmounts(pivotRows, accounts),
+    transaction: transactions
   };
 }

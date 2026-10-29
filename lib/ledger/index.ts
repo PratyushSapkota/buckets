@@ -4,9 +4,11 @@ import {
   AccountId,
   Ledger,
   LedgerAccount,
+  LedgerTransaction,
   LocalChange,
   SourceData,
   Transaction,
+  TransactionId,
 } from "@/types/models";
 
 export function computeLedger(
@@ -14,6 +16,7 @@ export function computeLedger(
   sourceData: SourceData,
 ): Ledger {
   const accounts = new Map<AccountId, LedgerAccount>();
+  const transactions = new Map<TransactionId, LedgerTransaction>();
 
   function recomputeBalance(id: AccountId, delta: number) {
     const existing = accounts.get(id);
@@ -36,6 +39,13 @@ export function computeLedger(
     });
   }
 
+  for (const transaction of sourceData.transaction) {
+    transactions.set(transaction.id, {
+      origin: "source",
+      transaction: transaction,
+    });
+  }
+
   for (const change of changes) {
     switch (change.action) {
       case "account/create":
@@ -53,6 +63,10 @@ export function computeLedger(
         break;
       case "transaction/create":
         const { transaction } = change;
+        transactions.set(transaction.id, {
+          origin: "local",
+          transaction: transaction,
+        });
         if (transaction.isTransfer) {
           recomputeBalance(transaction.accountFromId, -transaction.amountMinor);
           recomputeBalance(transaction.accountToId, transaction.amountMinor);
@@ -67,7 +81,7 @@ export function computeLedger(
     }
   }
 
-  return { accounts: accounts };
+  return { accounts: accounts, transactions: transactions };
 }
 
 export function validateTransactionAccount(
