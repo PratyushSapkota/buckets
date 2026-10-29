@@ -26,6 +26,12 @@ describe("sync server boundary", () => {
     expect(mocks.getSheet).not.toHaveBeenCalled();
     expect(mocks.insertRows).not.toHaveBeenCalled();
   });
+  it.each(["account/archive", "transaction/update", "transaction/delete", "unknown/action"])("rejects %s without writing even a preceding valid change", async (action) => {
+    const result = await syncLedgerChanges([{ action: "transaction/create", transaction }, { action, transactionId: transaction.id, accountId: account.id }]);
+    expect(result).toMatchObject({ ok: false, code: "UNSUPPORTED_ACTION", issues: [{ path: "1.action", message: "Unsupported operation" }] });
+    expect(mocks.getSheet).not.toHaveBeenCalled();
+    expect(mocks.insertRows).not.toHaveBeenCalled();
+  });
   it.each([null, { user: {} }, { user: { email: "removed@example.com" } }])("denies unauthorized session %j before Google access", async (session) => {
     mocks.session.mockResolvedValue(session);
     expect(await syncLedgerChanges([{ action: "transaction/create", transaction }])).toMatchObject({ ok: false });

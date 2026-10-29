@@ -25,6 +25,12 @@ const batch = z.array(z.discriminatedUnion("action", [
 ])).min(1).max(100);
 
 export function parseChanges(input: unknown): Creates {
+  if (Array.isArray(input) && input.length <= 100) {
+    const unsupported = input.findIndex((change) => change && typeof change === "object" && typeof change.action === "string" && change.action !== "account/create" && change.action !== "transaction/create");
+    if (unsupported !== -1) {
+      throw new LedgerError("UNSUPPORTED_ACTION", "This beta supports only creating accounts and transactions. Archive, edit, and delete are unavailable.", [{ path: `${unsupported}.action`, message: "Unsupported operation" }]);
+    }
+  }
   const result = batch.safeParse(input);
   if (!result.success) {
     throw new LedgerError("VALIDATION", "Check your pending changes before syncing.", result.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })));

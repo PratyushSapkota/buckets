@@ -38,8 +38,8 @@ export function TransactionTable() {
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Item>Delete</Menu.Item>
-          <Menu.Item>Edit</Menu.Item>
+          <Menu.Item disabled>Delete (unavailable in beta)</Menu.Item>
+          <Menu.Item disabled>Edit (unavailable in beta)</Menu.Item>
         </Menu.Dropdown>
       </Menu>
     );
