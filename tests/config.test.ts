@@ -38,3 +38,24 @@ it("accepts an intentionally empty allowlist and rejects malformed entries", () 
   expect(() => validateServerConfig({ ...valid, GOOGLE_OAUTH_ALLOWED_EMAILS: "" })).not.toThrow();
   expect(() => validateServerConfig({ ...valid, GOOGLE_OAUTH_ALLOWED_EMAILS: "not-an-email" })).toThrow(/GOOGLE_OAUTH_ALLOWED_EMAILS/);
 });
+
+it("accepts production Vercel settings without an explicit NEXTAUTH_URL", () => {
+  const config = validateServerConfig({ ...valid, NODE_ENV: "production", NEXTAUTH_URL: undefined, VERCEL: "1", VERCEL_URL: "buckets-deployment.vercel.app" });
+  expect(config.NEXTAUTH_URL).toBe("https://buckets-deployment.vercel.app");
+});
+
+it("preserves explicit origins and rejects invalid explicit overrides on Vercel", () => {
+  const env = { ...valid, NODE_ENV: "production", VERCEL: "1", VERCEL_URL: "buckets-deployment.vercel.app" };
+  expect(validateServerConfig({ ...env, NEXTAUTH_URL: "https://buckets.example.com" }).NEXTAUTH_URL).toBe("https://buckets.example.com");
+  for (const NEXTAUTH_URL of ["", "malformed", "http://public.example.com"]) {
+    expect(() => validateServerConfig({ ...env, NEXTAUTH_URL })).toThrow(/NEXTAUTH_URL/);
+  }
+});
+
+it("requires an explicit origin outside Vercel and rejects malformed fallback domains", () => {
+  expect(() => validateServerConfig({ ...valid, NEXTAUTH_URL: undefined })).toThrow(/NEXTAUTH_URL/);
+  expect(() => validateServerConfig({ ...valid, NEXTAUTH_URL: undefined, VERCEL_URL: "buckets.vercel.app" })).toThrow(/NEXTAUTH_URL/);
+  for (const VERCEL_URL of [undefined, "", "https://buckets.vercel.app", "buckets.vercel.app/path", "user@buckets.vercel.app", "buckets.vercel.app?query", "buckets.vercel.app:443", "buckets.vercel.app\\path", "localhost", "127.0.0.1", "-bad.vercel.app", "buckets..vercel.app", "buckets.vercel.app\n"]) {
+    expect(() => validateServerConfig({ ...valid, NEXTAUTH_URL: undefined, VERCEL: "1", VERCEL_URL })).toThrow(/NEXTAUTH_URL/);
+  }
+});
