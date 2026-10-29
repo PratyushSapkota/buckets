@@ -88,7 +88,8 @@ export function LedgerProvider({
     const localChanges: LocalChange[] = storedLocalChanges.map(
       ({ sequence, ...change }) => change,
     );
-    await syncLedgerChanges(localChanges);
+    const result = await syncLedgerChanges(localChanges);
+    if (!result.ok) throw new Error(result.message);
     await clearChanges();
     refresh();
   }
