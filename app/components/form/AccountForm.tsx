@@ -4,7 +4,7 @@ import { SubmitEventHandler, useState } from "react";
 import { addAccount } from "./accountActions";
 import { useLedger } from "../ledger/LedgerProvider";
 
-export function AccountForm() {
+export function AccountForm({ drawerClose }: { drawerClose: () => void }) {
   const [accountName, setAccountName] = useState("");
   const [bucketName, setBucketName] = useState("");
   const [labelColor, setLabelColor] = useState("#ffffff");
@@ -14,6 +14,7 @@ export function AccountForm() {
   const handleSubmit: SubmitEventHandler = async (event) => {
     event.preventDefault();
     await addAccount(accountName, bucketName, labelColor, addChange);
+    drawerClose();
     setAccountName("");
     setBucketName("");
   };

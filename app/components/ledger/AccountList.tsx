@@ -1,17 +1,28 @@
 "use client";
-import { Box, Stack, Text } from "@mantine/core";
+import { Box, Button, Drawer, Flex, Stack, Text, Title } from "@mantine/core";
 import { useLedger } from "./LedgerProvider";
 import { formatBalance } from "@/utils/balance";
+import { LucidePlus } from "lucide-react";
+import { useDisclosure } from "@mantine/hooks";
+import { AccountForm } from "../form/AccountForm";
 
 export function AccountList() {
   const { ledger } = useLedger();
   if (ledger == null) return <div>Wait</div>;
+
+  const [opened, { open, close }] = useDisclosure(false);
+
   const accountsMap = ledger.accounts;
   return (
-    <>
-      <Text size="xl" fw={800}>
-        Account Summary
-      </Text>
+    <Box>
+      <Flex>
+        <Title size={26} order={1} fw={500}>
+          Account Summary
+        </Title>
+        <Button variant="default" size="compact-sm" fullWidth={false} onClick={open}>
+          <LucidePlus />
+        </Button>
+      </Flex>
       <Stack>
         {Array.from(accountsMap.values()).map((entry) => (
           <Box key={entry.account.id}>
@@ -19,6 +30,9 @@ export function AccountList() {
           </Box>
         ))}
       </Stack>
-    </>
+      <Drawer title="Account Create" opened={opened} onClose={close}>
+        <AccountForm drawerClose={close} />
+      </Drawer>
+    </Box>
   );
 }
