@@ -2,6 +2,7 @@ import "server-only";
 import { createPrivateKey } from "node:crypto";
 import { z } from "zod";
 import { LedgerError } from "./ledgerErrors";
+import { resolveAuthUrl } from "./authUrl";
 
 const required = z.string().trim().min(1);
 const schema = z.object({
@@ -23,7 +24,7 @@ const schema = z.object({
 });
 
 export function validateServerConfig(env: Record<string, string | undefined>) {
-  const parsed = schema.safeParse(env);
+  const parsed = schema.safeParse({ ...env, NEXTAUTH_URL: resolveAuthUrl(env) });
   if (!parsed.success) {
     const keys = [...new Set(parsed.error.issues.map((issue) => String(issue.path[0])))];
     throw new LedgerError("CONFIGURATION", `Invalid or missing server settings: ${keys.join(", ")}. Check the deployment environment.`);
