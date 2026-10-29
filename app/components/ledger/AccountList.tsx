@@ -1,5 +1,5 @@
 "use client";
-import { Box, Button, Drawer, Flex, Stack, Text, Title } from "@mantine/core";
+import { Box, Button, Drawer, Flex, Stack, Title } from "@mantine/core";
 import { useLedger } from "./LedgerProvider";
 import { formatBalance } from "@/utils/balance";
 import { LucidePlus } from "lucide-react";
@@ -8,9 +8,8 @@ import { AccountForm } from "../form/AccountForm";
 
 export function AccountList() {
   const { ledger } = useLedger();
-  if (ledger == null) return <div>Wait</div>;
-
   const [opened, { open, close }] = useDisclosure(false);
+  if (ledger == null) return <div>Wait</div>;
 
   const accountsMap = ledger.accounts;
   return (

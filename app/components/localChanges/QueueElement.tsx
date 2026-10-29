@@ -1,10 +1,15 @@
 import { Box, Text, Flex } from "@mantine/core";
+import type { LocalChange } from "@/types/models";
 import {
   type LucideIcon,
   ArrowDownLeft,
   ArrowUpRight,
   ArrowLeftRight,
 } from "lucide-react";
+
+function assertNever(change: never): never {
+  throw new Error(`Unsupported queued operation: ${JSON.stringify(change)}`);
+}
 
 export function QueueElement({ change }: { change: LocalChange }) {
   type QueueElementValues = {
@@ -60,12 +65,14 @@ export function QueueElement({ change }: { change: LocalChange }) {
       break;
     case "transaction/update":
       elementValues = {
-        heading: "Delete Transaction",
+        heading: "Update Transaction",
         subHeading: "",
         leftIcon: null,
         leftValue: null,
       };
       break;
+    default:
+      return assertNever(change);
   }
 
   return (

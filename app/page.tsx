@@ -8,7 +8,7 @@ import { SourceData } from "@/types/models";
 import { getSheetData } from "@/lib/sheets";
 import { AccountList } from "./components/ledger/AccountList";
 import { TransactionTable } from "./components/ledger/TransactionTable";
-import { Box, Drawer, Flex, Stack } from "@mantine/core";
+import { Box, Flex, Stack } from "@mantine/core";
 import { UserControl } from "./components/UserControl";
 
 export default async function Home() {
