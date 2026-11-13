@@ -19,8 +19,12 @@ export async function getSheet(worksheet: string) {
   const doc = new GoogleSpreadsheet(getServerConfig().SERVICE_SHEET_ID, auth);
 
   await doc.loadInfo();
-  const sheet = doc.sheetsByTitle[worksheet];
-  if (!sheet) throw new Error("No ledger worksheet is configured for this account.");
+  const sheet =
+    doc.sheetsByTitle[
+      process.env.NODE_ENV == "development" ? "test" : worksheet
+    ];
+  if (!sheet)
+    throw new Error("No ledger worksheet is configured for this account.");
   return sheet;
 }
 
