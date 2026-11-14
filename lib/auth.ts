@@ -1,7 +1,8 @@
-import type { NextAuthOptions } from "next-auth";
+import { getServerSession, type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { isAllowedEmail } from "./allowlist";
 import { getServerConfig } from "./config";
+import { LedgerError } from "./ledgerErrors";
 
 const config = getServerConfig();
 
@@ -30,3 +31,30 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+export async function getUser() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    throw new LedgerError(
+      "UNAUTHORIZED",
+      "Please sign in before accessing your ledger.",
+    );
+  }
+
+  if (!session.user.email) {
+    throw new LedgerError(
+      "UNAUTHORIZED",
+      "Your session is missing an email. Please sign in again.",
+    );
+  }
+
+  if (!isAllowedEmail(session.user.email)) {
+    throw new LedgerError(
+      "FORBIDDEN",
+      "This account does not have access to the ledger.",
+    );
+  }
+
+  return session.user;
+}
