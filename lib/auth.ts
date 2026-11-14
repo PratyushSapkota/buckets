@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { isAllowedEmail } from "./allowlist";
 import { getServerConfig } from "./config";
 import { LedgerError } from "./ledgerErrors";
+import { redirect } from "next/navigation";
 
 const config = getServerConfig();
 
@@ -57,4 +58,15 @@ export async function getUser() {
   }
 
   return session.user;
+}
+
+export async function requireUser() {
+  try {
+    return await getUser();
+  } catch (error) {
+    if (error instanceof LedgerError && error.code === "UNAUTHORIZED") {
+      redirect("/login");
+    }
+    throw error;
+  }
 }
