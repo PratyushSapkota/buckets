@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import AuthButton from "@/app/components/auth-button";
+import SignInButton from "../components/SignInButton"; "@/app/components/SignInButton";
 import { authOptions } from "@/lib/auth";
 
 const errorMessages: Record<string, string> = {
@@ -32,7 +32,7 @@ export default async function Login({ searchParams }: PageProps<"/login">) {
             : "Unable to sign in. Please try again."}
         </p>
       )}
-      <AuthButton action="signIn" />
+     <SignInButton />
     </main>
   );
 }

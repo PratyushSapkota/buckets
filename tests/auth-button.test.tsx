@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({ clear: vi.fn(), signIn: vi.fn(), signOut: vi.f
 vi.mock("@/lib/localDb", () => ({ clearChanges: mocks.clear }));
 vi.mock("next-auth/react", () => ({ signIn: mocks.signIn, signOut: mocks.signOut }));
 vi.mock("@mantine/core", () => ({ Button: (props: ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props} /> }));
-import AuthButton from "@/app/components/auth-button";
+import AuthButton from "@/app/components/SignInButton";
 
 describe("authentication cleanup", () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.clear.mockResolvedValue(undefined); });
